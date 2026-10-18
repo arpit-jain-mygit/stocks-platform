@@ -10,6 +10,18 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Company, Source, StocksApi } from '../../services/stocks-api';
 
+/**
+ * Starter questions shown in an empty chat - what most stock researchers ask first
+ * about any company. Clicking one sends it for the company in the picker.
+ */
+export const SUGGESTED_QUESTIONS = [
+  'What were the revenue and net profit for the latest period?',
+  'What is the earnings per share (EPS)?',
+  'How much debt does the company have, and what are its finance costs?',
+  'Has the company declared a dividend? How much?',
+  'What key risks, auditor qualifications or legal cases are mentioned?',
+];
+
 /** One bubble in the conversation. */
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'error';
@@ -39,6 +51,7 @@ export class Chat {
   protected readonly messages = signal<ChatMessage[]>([]);
   protected readonly waiting = signal(false);
   protected readonly question = signal('');
+  protected readonly suggestions = SUGGESTED_QUESTIONS;
   /** The picker's value: follows the home view's selection until the user changes it. */
   protected readonly company = linkedSignal(() => this.companyId() ?? '');
 
@@ -72,6 +85,12 @@ export class Chat {
       event.preventDefault();
       this.send();
     }
+  }
+
+  /** Sends a suggested question as if it had been typed. */
+  protected ask(text: string): void {
+    this.question.set(text);
+    this.send();
   }
 
   /** Sends the question (3+ characters) and adds the answer or an error to the conversation. */

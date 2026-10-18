@@ -46,7 +46,15 @@
           <div class="msg error" role="alert"><p>{{ m.text }}</p></div>
         }
       } @empty {
-        <p class="hint">Ask about {{ companyName(company()) }} &mdash; e.g. &ldquo;What was the net profit?&rdquo; Answers cite the filing and page.</p>
+        <div class="empty">
+          <p class="hint">Ask about {{ company() ? companyName(company()) : 'any company' }}. Answers cite the filing and page.</p>
+          <!-- Starter questions: one click sends the question. -->
+          <ul class="suggestions" aria-label="Suggested questions">
+            @for (q of suggestions; track q) {
+              <li><button type="button" (click)="ask(q)">{{ q }}</button></li>
+            }
+          </ul>
+        </div>
       }
       @if (waiting()) {
         <div class="msg assistant thinking">Thinking&hellip;</div>

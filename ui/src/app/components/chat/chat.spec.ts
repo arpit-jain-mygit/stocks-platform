@@ -4,7 +4,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Chat } from './chat';
+import { Chat, SUGGESTED_QUESTIONS } from './chat';
 import { AskResponse, Company } from '../../services/stocks-api';
 
 const OFSS: Company = {
@@ -75,6 +75,18 @@ describe('Chat', () => {
     expect(answer.querySelector('script')).toBeNull();                   // model text can't inject HTML
     expect(page.querySelector('.sources')?.textContent).toContain('ofss-ar.pdf, page 91');
     expect(page.textContent).not.toContain('Thinking');
+  });
+
+  it('shows 5 suggested questions; clicking one sends it for the picked company', async () => {
+    const { fixture, page } = await openChat();
+    const buttons = page.querySelectorAll<HTMLButtonElement>('.suggestions button');
+    expect(buttons.length).toBe(5);
+    expect(SUGGESTED_QUESTIONS.length).toBe(5);
+
+    buttons[1].click();
+    await fixture.whenStable();
+    expect(backend.expectOne('/api/ask').request.body).toEqual({ question: SUGGESTED_QUESTIONS[1], company: 'OFSS' });
+    expect(page.querySelector('.suggestions')).toBeNull();               // hidden once the chat has started
   });
 
   it('"All companies" sends no company', async () => {
