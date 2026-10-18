@@ -1,7 +1,8 @@
 # ui - Stocks Platform web app (Angular single page app)
 
 The browser app for stocks-platform. Today: one screen with a card per company that has ingested
-filings. Clicking a card shows its details (status, codes, aliases, filings) in a panel on the right,
+filings. Clicking a card opens a panel on the right with its details (status, codes, aliases, filings);
+the panel is hidden until a card is clicked,
 so the list stays visible; on phones (under 900px) the details open under the card instead. The
 "Ask a question" button (bottom-right) opens a chat window that asks `POST /ask` about the selected
 company or all companies, and shows answers with their cited sources. The address stays `/`.

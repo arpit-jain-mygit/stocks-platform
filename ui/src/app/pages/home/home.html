@@ -26,7 +26,7 @@
             <h3>
               <button type="button" class="company-head" (click)="toggle(company.company_id)"
                       [attr.aria-expanded]="isOpen"
-                      [attr.aria-controls]="wide() ? 'company-panel' : 'details-' + company.company_id">
+                      [attr.aria-controls]="isOpen ? (wide() ? 'company-panel' : 'details-' + company.company_id) : null">
                 <span class="titles">
                   <span class="name">{{ company.name }}</span>
                   <span class="codes">
@@ -51,18 +51,14 @@
       }
     </section>
 
-    <!-- Right (wide screens only): the selected company's details. -->
-    @if (wide()) {
+    <!-- Right (wide screens only): the selected company's details. Hidden until a card is clicked. -->
+    @if (wide() && openCompany(); as c) {
       <aside class="panel" id="company-panel" aria-label="Company details">
-        @if (openCompany(); as c) {
-          <div class="panel-head">
-            <h2>{{ c.name }}</h2>
-            <button type="button" class="close" (click)="toggle(c.company_id)" aria-label="Close details">&times;</button>
-          </div>
-          <app-company-details [companyId]="c.company_id" />
-        } @else {
-          <p class="status placeholder">Select a company to see its details and filings.</p>
-        }
+        <div class="panel-head">
+          <h2>{{ c.name }}</h2>
+          <button type="button" class="close" (click)="toggle(c.company_id)" aria-label="Close details">&times;</button>
+        </div>
+        <app-company-details [companyId]="c.company_id" />
       </aside>
     }
   </div>

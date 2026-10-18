@@ -41,17 +41,17 @@ describe('Home', () => {
     expect(page.textContent).toContain('532466');
   });
 
-  it('wide screen: a click shows the company in the right panel; clicking again clears it', async () => {
+  it('wide screen: no panel at first; a click shows the company in the right panel; closing hides it', async () => {
     const { fixture, request, page } = await open();
     request.flush([OFSS]);
     await fixture.whenStable();
     const head = page.querySelector('button.company-head') as HTMLButtonElement;
-    expect(page.querySelector('#company-panel')?.textContent).toContain('Select a company');
-    expect(head.getAttribute('aria-controls')).toBe('company-panel');
+    expect(page.querySelector('#company-panel')).toBeNull();            // no panel until a card is clicked
 
     head.click();                                                        // select
     await fixture.whenStable();
     expect(head.getAttribute('aria-expanded')).toBe('true');
+    expect(head.getAttribute('aria-controls')).toBe('company-panel');
     expect(page.querySelector('#company-panel h2')?.textContent).toContain('Oracle Financial Services Software Ltd');
     expect(page.querySelector('#company-panel app-company-details')).not.toBeNull();
     expect(page.querySelector('.details')).toBeNull();                   // nothing opens under the card
@@ -61,7 +61,7 @@ describe('Home', () => {
     (page.querySelector('#company-panel .close') as HTMLButtonElement).click();   // the panel's close button
     await fixture.whenStable();
     expect(head.getAttribute('aria-expanded')).toBe('false');
-    expect(page.querySelector('#company-panel')?.textContent).toContain('Select a company');
+    expect(page.querySelector('#company-panel')).toBeNull();            // panel hidden again
   });
 
   it('narrow screen: details open under the card, and there is no panel', async () => {
@@ -75,10 +75,9 @@ describe('Home', () => {
       await fixture.whenStable();
       expect(page.querySelector('#company-panel')).toBeNull();
       const head = page.querySelector('button.company-head') as HTMLButtonElement;
-      expect(head.getAttribute('aria-controls')).toBe('details-OFSS');
-
       head.click();                                                      // open under the card
       await fixture.whenStable();
+      expect(head.getAttribute('aria-controls')).toBe('details-OFSS');
       expect(page.querySelector('#details-OFSS app-company-details')).not.toBeNull();
       backend.expectOne('/api/companies/OFSS');
       backend.expectOne('/api/doc-types');
