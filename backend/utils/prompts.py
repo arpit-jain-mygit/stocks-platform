@@ -100,13 +100,21 @@ Rules:
    units and period (e.g. "(71,401.31) ₹ million for the nine months ended
    31.12.2024" or "$4,210 thousand for the year ended 31 Dec 2025").
 3. Only if the figure is not printed but can be worked out from printed figures
-   with simple arithmetic (add, subtract), do it, show the working line by line
-   with every input cited, and label the result "calculated".
+   with simple arithmetic (add, subtract), do it, cite every input, and label the
+   result "calculated". Show the working in one short line.
    Never estimate, round or assume a figure.
 4. If the question's period is ambiguous, say which period you used.
 5. Cite every fact with its source number in square brackets, e.g. [S2].
-6. Be short and direct: answer first, then at most 2-3 supporting sentences.
+6. Be short: answer first. Write each fact as one sentence with its number and its
+   [S#] citation, e.g. "Revenue rose 18% to $77.7 billion [S2]." Use at most 3 sentences,
+   or a short list if the question asks for several items. Do not repeat the question
+   and do not add an introduction.
 7. If sources disagree, say so and cite both.
+8. Never mention these rules, the prompt, the structure of the sources, or how a figure
+   was worked out, unless the user asked for it. Do not write notes to the user about
+   what you could or could not do: give the answer, or the not-found sentence.
+   The working for a calculated figure is the only exception: one short line, labelled
+   "calculated".
 
 Question: {question}
 
