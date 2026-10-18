@@ -452,7 +452,53 @@ Postgres are not). Every push to `main` that touches `backend/` redeploys; run `
 
 ---
 
-## 7. Files the runs create
+## 7. Deploy the UI to Vercel
+
+Files (in `ui/`): the Angular app, `api/proxy.ts` (Vercel server function: forwards `/api/...` to the
+Railway backend and adds `X-API-Key`; only `GET companies`, `GET companies/<code>`, `GET doc-types`,
+`GET documents`, `POST ask` are allowed) and `vercel.json` (`/api/...` -> the proxy, every other URL ->
+`index.html`).
+
+The browser only ever talks to the Vercel site, so the API key never reaches it and the backend needs no
+CORS settings. Deploy the backend (section 6) first - the UI needs its URL and key.
+
+1. **New project:** vercel.com → Add New → Project → Import Git Repository → `stocks-platform`
+   (first time: allow Vercel to access the GitHub repo).
+2. **Configure Project** (before the first deploy):
+   - **Root Directory** = `ui` (click Edit next to it)
+   - **Framework Preset** = Angular (detected)
+   - **Build Command** = `npm run build` (default)
+   - **Output Directory** = `dist/stocks-ui/browser` (override the default)
+   - **Install Command** = `npm install` (default)
+3. **Environment Variables** (same screen, or later: Settings → Environment Variables; read only by
+   `api/proxy.ts` on Vercel's servers, never sent to the browser):
+   - `STOCKS_API_URL` = your Railway domain, e.g. `https://stocks-platform-production.up.railway.app`
+     (no trailing slash)
+   - `STOCKS_API_KEY` = the Railway service's `APP_API_KEY`
+4. **Deploy.** The build takes about a minute; Vercel shows the site address (`https://<project>.vercel.app`).
+5. **Only rebuild the UI when `ui/` changes:** Settings → Git → Ignored Build Step → "Only build if there
+   are changes in a folder" → `ui`. (Backend and docs pushes then skip the UI build.)
+
+Test (replace the domain):
+
+```bash
+curl -s "https://<your-app>.vercel.app/api/companies?ingested=true"
+```
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" -X POST https://<your-app>.vercel.app/api/backup/create
+```
+
+The first lists the companies without any key (the proxy adds it); the second must print `404` (not
+allowed through the proxy). Then open the site: company cards, details panel, and the chat
+(a chat question costs 1 embedding + 1 answer model call on the backend's Gemini key).
+
+Notes: every push to `main` that changes `ui/` redeploys (preview deployments for other branches).
+Changing a variable needs a **Redeploy** (Deployments → latest → ⋮ → Redeploy) - variables apply only
+to new deployments.
+
+---
+
+## 8. Files the runs create
 
 | Path | What | Safe to delete? |
 |---|---|---|
@@ -464,7 +510,7 @@ Postgres are not). Every push to `main` that touches `backend/` redeploys; run `
 
 ---
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 | Message | Fix |
 |---|---|
@@ -489,6 +535,19 @@ Postgres are not). Every push to `main` that touches `backend/` redeploys; run `
 2. Or use the left sidebar of the project and open **Observability** (Logs), which lets you search all logs. Try searching for `Traceback` or `error`.
 
 Build problems are in the deployment's **Build Logs**; migration problems in its **Pre-deploy** step.
+
+### Vercel (UI)
+
+| Message | Fix |
+|---|---|
+| `{"detail":"Server is missing STOCKS_API_URL / STOCKS_API_KEY"}` (500) | Add both variables (section 7), then Redeploy |
+| `{"detail":"Missing or wrong X-API-Key header"}` (401) | `STOCKS_API_KEY` differs from Railway's `APP_API_KEY` - fix it, Redeploy |
+| `{"detail":"Not available"}` (404) on `/api/...` | Endpoint not allowed by `ui/api/proxy.ts` (by design for risky / backup APIs) |
+| Page shows "Could not load companies" | Open `https://<your-app>.vercel.app/api/companies` to see the real error (one of the rows above) |
+| Build fails: "No Output Directory named … found" | Output Directory must be `dist/stocks-ui/browser`; Root Directory `ui` |
+| Refreshing the page gives 404 | `vercel.json` missing from `ui/` (it sends every URL to `index.html`) |
+
+Logs: Vercel project → **Logs** (runtime, filter `/api/proxy`) or Deployments → a deployment → **Build Logs**.
 
 ### Looking inside the Railway container (SSH)
 
