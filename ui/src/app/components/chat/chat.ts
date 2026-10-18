@@ -130,11 +130,11 @@ export class Chat {
     return code ? (this.companies().find((c) => c.company_id === code)?.name ?? code) : 'All companies';
   }
 
-  /** The answer as safe HTML: text escaped, **bold** kept, [S1] shown as small citation tags. */
+  /** The answer as safe HTML: text escaped, **bold** kept, [S1] shown as a small tag with its brackets. */
   protected answerHtml(text: string): string {
     return escapeHtml(text)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\[(S\d+(?:\s*,\s*S\d+)*)\]/g, '<span class="cite">$1</span>')
+      .replace(/\[(S\d+(?:\s*,\s*S\d+)*)\]/g, '<span class="cite">[$1]</span>')
       .replace(/\n/g, '<br>');
   }
 }

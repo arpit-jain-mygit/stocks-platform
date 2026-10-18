@@ -73,7 +73,7 @@ describe('Chat', () => {
     await fixture.whenStable();
     const answer = page.querySelector('.assistant p') as HTMLElement;
     expect(answer.querySelector('strong')?.textContent).toBe('303.54');   // **bold** rendered
-    expect(answer.querySelector('.cite')?.textContent).toBe('S1');       // [S1] as a tag
+    expect(answer.querySelector('.cite')?.textContent).toBe('[S1]');     // [S1] as a tag, brackets shown
     expect(answer.querySelector('script')).toBeNull();                   // model text can't inject HTML
     expect(page.querySelector('.sources')?.textContent).toContain('ofss-ar.pdf, page 91');
     expect(page.textContent).not.toContain('Thinking');
