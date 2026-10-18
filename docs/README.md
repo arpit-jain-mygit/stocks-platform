@@ -500,6 +500,11 @@ Use it to check files on the volume, e.g. that the caches survive a redeploy.
    ```bash
    railway login
    ```
+   `railway ssh` also needs an SSH key on your Mac. If it says `No SSH keys found`, create one (press Enter
+   for the default location; the private key never leaves your Mac), then run the SSH command again:
+   ```bash
+   ssh-keygen -t ed25519 -C "<your email>"
+   ```
 2. Right-click the service card (or its **⋮** menu) → **Copy SSH Command**, paste it in your terminal
    (`railway ssh --project=… --environment=… --service=…`). You are now inside the running container.
 3. Look at the caches:
@@ -508,6 +513,28 @@ Use it to check files on the volume, e.g. that the caches survive a redeploy.
    ```
    Expect one folder per `doc_id` plus `vectors/`. Missing or empty = nothing ingested on Railway yet
    (the folder is created by the first ingestion). Leave with `exit`.
+
+Your prompt shows where commands run: `arpit@…-iMac backend %` = your Mac, `root@<container-id>:/app#` =
+inside Railway. `ls /data` showing only `lost+found` = the volume is mounted and still empty.
+
+**Check that the volume survives a redeploy** (no model calls):
+
+1. Inside the container, write a marker file:
+   ```bash
+   mkdir -p /data/cache && echo ok > /data/cache/volume-test.txt
+   ```
+2. `exit`, then in Railway: **Deployments** → latest deployment's **⋮** → **Redeploy**.
+3. When it is green, SSH in again:
+   ```bash
+   cat /data/cache/volume-test.txt
+   ```
+   `ok` = the volume persists (so the caches will too). Nothing / error = check Volume mount path is `/data`.
+4. Clean up:
+   ```bash
+   rm /data/cache/volume-test.txt
+   ```
+
+Re-uploading a PDF that is already ingested does not fill the cache - the API skips it before reading any page.
 
 The Railway cache is separate from your local `data/cache`: a `force=true` re-ingest on Railway calls the
 vision and embedding models again. Run big forced re-ingests locally, where the cache already exists.
