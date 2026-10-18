@@ -182,3 +182,31 @@ def test_every_supported_extension_is_accepted_by_the_checker():
     assert check_format("a.docx", make_docx()) == ".docx"
     assert check_format("a.txt", b"hello") == ".txt"
     assert check_format("a.md", b"# hello") == ".md"
+
+
+# =====================================================================================
+# 4. Citations: spreadsheets and CSV show their sheet and rows, not a page number
+# =====================================================================================
+def test_spreadsheet_citation_shows_sheet_and_rows_not_a_page(client, llm, ingest):
+    ingest(make_xlsx(), name="statements.xlsx")
+    result = client.post("/ask", json={"question": "What was revenue?", "company": "VIDEOIND"}).json()
+    assert result["sources"], "the fake answer cites S1, so a source is returned"
+    source = result["sources"][0]
+    assert source["location"].startswith("sheet '") and "rows " in source["location"]
+    assert source["citation"] == source["location"] and source["pages"] == ""
+    [prompt] = llm["answer"].prompts
+    assert "statements.xlsx, sheet '" in prompt and "statements.xlsx, page" not in prompt
+
+
+def test_csv_citation_shows_rows(client, llm, ingest):
+    ingest(make_csv(rows=3), name="results.csv")
+    result = client.post("/ask", json={"question": "What was revenue?", "company": "VIDEOIND"}).json()
+    source = result["sources"][0]
+    assert source["location"].startswith("rows ") and source["pages"] == ""
+
+
+def test_pdf_and_slide_citations_still_show_the_page(client, llm, ingest):
+    ingest(make_pptx("cite-test"), name="slides.pptx")
+    result = client.post("/ask", json={"question": "What was revenue?", "company": "VIDEOIND"}).json()
+    source = result["sources"][0]
+    assert source["location"] == "" and source["citation"].startswith("page ")

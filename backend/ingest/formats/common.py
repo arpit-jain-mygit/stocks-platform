@@ -64,20 +64,30 @@ def markdown_table(rows: list[list[str]]) -> str:
     return "\n".join(lines)
 
 
-def table_pages(title: str, rows: list[list[str]], first_page: int) -> list[PageResult]:
+def table_pages(title: str, rows: list[list[str]], first_page: int,
+                row_numbers: list[int] | None = None) -> list[PageResult]:
     """
     Splits table rows into pages of MAX_ROWS_PER_PAGE. Each page starts with the title (a
     heading, if any) and repeats the header row. Pages are numbered from first_page.
+
+    row_numbers: the row numbers in the original file (1 = first row), so each page can say
+    which rows it holds even when blank rows were skipped. Each page gets a location label,
+    e.g. "sheet 'Income Statements', rows 2-61", which is what citations show for spreadsheets.
     """
-    rows = [row for row in rows if any(cell.strip() for cell in row)]
-    if not rows:
+    numbered = [(n, row) for n, row in zip(row_numbers or range(1, len(rows) + 1), rows)
+                if any(cell.strip() for cell in row)]
+    if not numbered:
         return []
-    header, body = rows[0], rows[1:]
+    (header_no, header), body = numbered[0], numbered[1:]
     pages = []
     for start in range(0, max(len(body), 1), MAX_ROWS_PER_PAGE):
         chunk = body[start:start + MAX_ROWS_PER_PAGE]
-        text = (f"## {title}\n\n" if title else "") + markdown_table([header] + chunk)
-        pages.append(PageResult(first_page + len(pages), text, "text"))
+        first_no = chunk[0][0] if chunk else header_no
+        last_no = chunk[-1][0] if chunk else header_no
+        rows_label = f"rows {first_no}" if first_no == last_no else f"rows {first_no}-{last_no}"
+        location = f"sheet '{title}', {rows_label}" if title else rows_label
+        text = (f"## {title}\n\n" if title else "") + markdown_table([header] + [row for _, row in chunk])
+        pages.append(PageResult(first_page + len(pages), text, "text", location=location))
     return pages
 
 

@@ -60,6 +60,7 @@ class Block:
     page_start: int
     page_end: int
     source: str        # how the page was read: "text", "vision" or "ocr"
+    location: str = ""  # citation label from the page ("" = use the page numbers)
 
 
 @dataclass
@@ -72,6 +73,7 @@ class Chunk:
     page_end: int
     source: str
     chunk_no: int = 0  # position in the document, set at the end
+    location: str = ""  # citation label, e.g. "sheet 'Income Statements', rows 2-61" ("" = page numbers)
 
 
 # --- Small helpers ---------------------------------------------------------------
@@ -165,14 +167,14 @@ def page_to_blocks(page: PageResult, repeated: set[str]) -> list[Block]:
         if para:
             text = " ".join(para)
             if is_heading(text):
-                blocks.append(Block("heading", text.lstrip("# "), page.page_no, page.page_no, page.source))
+                blocks.append(Block("heading", text.lstrip("# "), page.page_no, page.page_no, page.source, page.location))
             else:
-                blocks.append(Block("para", text, page.page_no, page.page_no, page.source))
+                blocks.append(Block("para", text, page.page_no, page.page_no, page.source, page.location))
             para.clear()
 
     def close_table():
         if table:
-            blocks.append(Block("table", "\n".join(table), page.page_no, page.page_no, page.source))
+            blocks.append(Block("table", "\n".join(table), page.page_no, page.page_no, page.source, page.location))
             table.clear()
 
     for line in clean_lines(page, repeated):
@@ -287,7 +289,7 @@ def chunk_pages(pages: list[PageResult], company: str, period: str) -> list[Chun
     def add_chunk(kind: str, body: str, first: Block, last: Block):
         label = f"{company} | {period} | {section}"
         chunks.append(Chunk(kind, section, f"{label}\n\n{body}",
-                            first.page_start, last.page_end, first.source))
+                            first.page_start, last.page_end, first.source, location=first.location))
 
     def flush_prose():
         # Nothing to write, or only a heading (e.g. a table title) - the

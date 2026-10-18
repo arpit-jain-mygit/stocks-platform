@@ -29,10 +29,11 @@ def format_sources(hits: list[Hit]) -> str:
     """
     Numbers each chunk so the model can cite it:
         [S1] Videocon-Financial_Results_Dec-24.pdf, page 11
+        [S2] statements.xlsx, sheet 'Income Statements', rows 2-61
         Videocon Industries Ltd | Q3 FY25 | ... (chunk text)
     """
     return "\n\n".join(
-        f"[S{n}] {hit.file_name}, page {hit.pages}\n{hit.text}"
+        f"[S{n}] {hit.file_name}, {hit.citation}\n{hit.text}"
         for n, hit in enumerate(hits, start=1)
     )
 
@@ -76,7 +77,9 @@ def answer(question: str, company: str | None = None, period: str | None = None,
         {
             "ref": f"S{n}",
             "file_name": hit.file_name,
-            "pages": hit.pages,
+            "pages": "" if hit.location else hit.pages,
+            "location": hit.location,
+            "citation": hit.citation,
             "section": hit.section,
             "kind": hit.kind,
             "score": round(hit.score, 3),

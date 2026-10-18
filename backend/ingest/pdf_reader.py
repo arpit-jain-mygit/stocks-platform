@@ -85,6 +85,8 @@ class PageResult:
                      # "ocr"    = vision model refused, read by local OCR
                      # "failed" = nothing could read it (see error)
     error: str = ""  # why the page failed or fell back; "" when all went well
+    location: str = ""  # a citation label instead of a page, e.g. "sheet 'Income Statements', rows 2-61";
+                        # "" = cite the page number (PDF pages, slides)
 
 
 # --- Decide: text page or scanned page? ----------------------------------------

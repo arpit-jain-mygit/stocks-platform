@@ -22,4 +22,4 @@ class CsvReader(DocumentReader):
     def read(self, data: bytes, doc_id: str, use_cache: bool):
         text = data.decode("utf-8-sig")
         rows = [[cell_text(cell) for cell in row] for row in csv.reader(io.StringIO(text))]
-        return table_pages("", rows, first_page=1)
+        return table_pages("", rows, first_page=1)     # rows are numbered from the header (row 1)

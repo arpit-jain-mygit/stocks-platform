@@ -45,6 +45,12 @@ class Hit:
     chunk_no: int
     doc_id: str
     company_id: str
+    location: str = ""  # citation label ("" = cite the pages)
+
+    @property
+    def citation(self) -> str:
+        """What to show for this chunk: its location (sheets, rows) or its page."""
+        return self.location or f"page {self.pages}"
 
     @property
     def pages(self) -> str:
@@ -90,6 +96,7 @@ def search(question: str, company: str | None = None, period: str | None = None,
             chunk_no=point.payload["chunk_no"],
             doc_id=point.payload["doc_id"],
             company_id=point.payload.get("company_id", ""),
+            location=point.payload.get("location", ""),
         )
         for point in points
     ]

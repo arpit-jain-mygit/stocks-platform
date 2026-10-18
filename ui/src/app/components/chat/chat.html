@@ -37,7 +37,7 @@
             @if (m.sources?.length) {
               <ul class="sources" aria-label="Sources">
                 @for (s of m.sources; track s.ref) {
-                  <li><span class="cite">{{ s.ref }}</span> {{ s.file_name }}, page {{ s.pages }}</li>
+                  <li><span class="cite">{{ s.ref }}</span> {{ s.file_name }}, {{ s.citation || ('page ' + s.pages) }}</li>
                 }
               </ul>
             }

@@ -90,7 +90,9 @@ class AskRequest(BaseModel):
 class Source(BaseModel):
     ref: str
     file_name: str
-    pages: str
+    pages: str                   # page numbers ("" for spreadsheets and CSV)
+    location: str = ""           # e.g. "sheet 'Income Statements', rows 2-61"
+    citation: str = ""           # what to show: the location, or "page N"
     section: str
     kind: str
     score: float

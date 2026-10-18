@@ -26,7 +26,9 @@ class XlsxReader(DocumentReader):
         workbook = openpyxl.load_workbook(io.BytesIO(data), data_only=True, read_only=True)
         pages = []
         for sheet in workbook.worksheets:
-            rows = [[cell_text(cell) for cell in row] for row in sheet.iter_rows(values_only=True)]
-            pages += table_pages(sheet.title, rows, first_page=len(pages) + 1)
+            numbered = list(enumerate(sheet.iter_rows(values_only=True), start=1))   # keep the sheet's own row numbers
+            rows = [[cell_text(cell) for cell in row] for _, row in numbered]
+            pages += table_pages(sheet.title, rows, first_page=len(pages) + 1,
+                                 row_numbers=[number for number, _ in numbered])
         workbook.close()
         return pages

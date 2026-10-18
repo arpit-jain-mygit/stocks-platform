@@ -14,7 +14,7 @@ const OFSS: Company = {
 };
 const ANSWER: AskResponse = {
   answer: 'Basic EPS was **303.54** [S1].\n<script>alert(1)</script>',
-  sources: [{ ref: 'S1', file_name: 'ofss-ar.pdf', pages: '91', section: 'Note 23', kind: 'table', score: 0.74,
+  sources: [{ ref: 'S1', file_name: 'ofss-ar.pdf', pages: '91', location: '', citation: 'page 91', section: 'Note 23', kind: 'table', score: 0.74,
               doc_id: 'abc', company_id: 'OFSS' }],
 };
 
@@ -97,6 +97,19 @@ describe('Chat', () => {
     const after = page.querySelectorAll<HTMLButtonElement>('.suggestions button');
     expect(after.length).toBe(9);                                        // still shown after an answer
     expect(after[0].disabled).toBe(false);
+  });
+
+  it('a spreadsheet source shows its sheet and rows, not a page number', async () => {
+    const { fixture, page } = await openChat();
+    await ask(fixture, page, 'What was revenue?');
+    backend.expectOne('/api/ask').flush({ answer: 'Revenue was 57,167 [S1].', sources: [{ ref: 'S1',
+      file_name: 'statements.xlsx', pages: '', location: "sheet 'Income Statements', rows 2-61",
+      citation: "sheet 'Income Statements', rows 2-61", section: 'Income Statements', kind: 'table', score: 0.8,
+      doc_id: 'd', company_id: 'OFSS' }] });
+    await fixture.whenStable();
+    const sources = page.querySelector('.sources')?.textContent ?? '';
+    expect(sources).toContain("sheet 'Income Statements', rows 2-61");
+    expect(sources).not.toContain('page ');
   });
 
   it('"All companies" sends no company', async () => {

@@ -76,6 +76,7 @@ def store_chunks(doc_id: str, file_name: str, meta: dict,
                 "file_name": file_name,
                 "page_start": chunk.page_start,  # ... and to the exact pages
                 "page_end": chunk.page_end,
+                "location": chunk.location,      # citation label for sheets / rows ("" = use pages)
                 **meta,                          # company_id, company, fiscal_year, quarter, period_end, period, doc_type
                 "section": chunk.section,
                 "kind": chunk.kind,              # prose / table / fact

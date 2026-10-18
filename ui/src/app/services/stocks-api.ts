@@ -73,7 +73,9 @@ export interface AskRequest {
 export interface Source {
   ref: string;            // "S1"
   file_name: string;
-  pages: string;          // "91" or "6-7"
+  pages: string;          // "91" or "6-7"; "" for spreadsheets and CSV
+  location: string;       // e.g. "sheet 'Income Statements', rows 2-61"; "" for pages
+  citation: string;       // what to show: the location, or "page N"
   section: string;
   kind: string;           // prose / table / fact
   score: number;          // search similarity (higher = closer)
