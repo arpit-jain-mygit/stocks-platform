@@ -1,0 +1,1462 @@
+{
+  "company_id": "VIDEOIND",
+  "name": "stocks-rag eval set - Videocon Industries Ltd (VIDEOIND), Q3 FY25 results",
+  "description": "Hand-made test cases for POST /ask, written directly from the original PDF (not from the app's own output). Each case has the request to send, the ideal response, and simple checks to grade the real response.",
+  "document": {
+    "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+    "company": "Videocon Industries Ltd",
+    "period": "Q3 FY25 (quarter ended 31-Dec-2024)",
+    "units": "Figures in Rs million unless stated. Brackets = negative (loss)."
+  },
+  "how_to_grade": {
+    "must_contain": "Every inner list is one required fact; the answer passes it if it contains ANY of the strings in that list (case-insensitive). All inner lists must pass.",
+    "must_not_contain": "None of these strings may appear (catches wrong columns / wrong numbers).",
+    "expected_pages": "At least one returned source must have one of these page values (sources[].pages can be a range like '1-2'; count it if the range covers the page).",
+    "expect_not_found": "true = the answer must be the not-found reply ('I could not find this in the ingested filings.') and must not invent a figure.",
+    "calculated": "true = the figure is NOT printed in the filing; the answer should derive it and say it is calculated.",
+    "accept_any_of": "For ambiguous questions: the answer passes if it matches any one listed interpretation AND states which period it used.",
+    "needs_judge": "true = deterministic checks are not enough on their own; an LLM judge should also review the answer (see judge_focus)."
+  },
+  "cases": [
+    {
+      "id": "pl-01",
+      "category": "pnl_lookup",
+      "difficulty": "easy",
+      "request": {
+        "question": "What was the revenue from operations for the quarter ended 31 December 2024?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Revenue from operations for the quarter ended 31.12.2024 was 1,576.97 ₹ million [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "table or fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "1,576.97"
+          ]
+        ],
+        "must_not_contain": [
+          "1,663.72",
+          "4,855.51"
+        ],
+        "expected_pages": [
+          "11"
+        ]
+      },
+      "source_note": "P&L row I, column Quarter Ended 31.12.2024",
+      "needs_judge": false
+    },
+    {
+      "id": "pl-02",
+      "category": "pnl_lookup",
+      "difficulty": "easy",
+      "request": {
+        "question": "What were the finance costs in Q3 FY25?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Finance costs for Q3 FY25 (quarter ended 31.12.2024) were 24,023.62 ₹ million [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "24,023.62"
+          ]
+        ],
+        "must_not_contain": [
+          "23,205.93",
+          "68,870.13"
+        ],
+        "expected_pages": [
+          "11",
+          "12"
+        ]
+      },
+      "source_note": "P&L row IV(f); also segment table 'Less: Finance Cost' on page 12",
+      "needs_judge": false
+    },
+    {
+      "id": "pl-03",
+      "category": "pnl_lookup",
+      "difficulty": "easy",
+      "request": {
+        "question": "What was the net loss for the December 2024 quarter?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "The loss for the quarter ended 31.12.2024 was (24,898.56) ₹ million [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "24,898.56"
+          ]
+        ],
+        "must_not_contain": [
+          "71,401.31",
+          "24,925.55"
+        ],
+        "expected_pages": [
+          "11"
+        ]
+      },
+      "source_note": "P&L row IX Loss for the period, Quarter Ended 31.12.2024",
+      "needs_judge": false
+    },
+    {
+      "id": "pl-04",
+      "category": "pnl_lookup",
+      "difficulty": "easy",
+      "request": {
+        "question": "What was the total income for the nine months ended 31 December 2024?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Total income for the nine months ended 31.12.2024 was 5,010.50 ₹ million [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "5,010.50"
+          ]
+        ],
+        "must_not_contain": [
+          "4,854.36",
+          "1,628.17"
+        ],
+        "expected_pages": [
+          "11"
+        ]
+      },
+      "source_note": "P&L row III Total Income, Nine Months Ended 31.12.2024",
+      "needs_judge": false
+    },
+    {
+      "id": "pl-05",
+      "category": "pnl_lookup",
+      "difficulty": "medium",
+      "request": {
+        "question": "How much other income did the company earn in the September 2024 quarter?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Other income for the quarter ended 30.09.2024 was 57.45 ₹ million [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "57.45"
+          ]
+        ],
+        "must_not_contain": [
+          "51.20",
+          "154.99"
+        ],
+        "expected_pages": [
+          "11"
+        ]
+      },
+      "source_note": "P&L row II, Quarter Ended 30.09.2024 (tests picking a non-latest column)",
+      "needs_judge": false
+    },
+    {
+      "id": "pl-06",
+      "category": "pnl_lookup",
+      "difficulty": "easy",
+      "request": {
+        "question": "What was the depreciation and amortization expense for the quarter ended 31.12.2024?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Depreciation and amortization expense was 1,318.97 ₹ million for the quarter ended 31.12.2024 [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "1,318.97"
+          ]
+        ],
+        "must_not_contain": [
+          "3,956.90"
+        ],
+        "expected_pages": [
+          "11"
+        ]
+      },
+      "source_note": "P&L row IV(g). Note: same value in Q2 and Q3.",
+      "needs_judge": false
+    },
+    {
+      "id": "pl-07",
+      "category": "pnl_lookup",
+      "difficulty": "medium",
+      "request": {
+        "question": "What were the basic and diluted earnings per share for Q3 FY25?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "For the quarter ended 31.12.2024, basic EPS was (74.44) ₹ and diluted EPS was (67.04) ₹ (face value ₹10, not annualised) [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "74.44"
+          ],
+          [
+            "67.04"
+          ]
+        ],
+        "must_not_contain": [
+          "213.48",
+          "192.26"
+        ],
+        "expected_pages": [
+          "11"
+        ]
+      },
+      "source_note": "P&L row XIV (1) Basic, (2) Diluted",
+      "needs_judge": false
+    },
+    {
+      "id": "pl-08",
+      "category": "pnl_lookup",
+      "difficulty": "easy",
+      "request": {
+        "question": "What is the paid up equity share capital and the face value per share?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Paid up equity share capital is 3,344.59 ₹ million, with a face value of ₹10 per share [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "3,344.59"
+          ],
+          [
+            "10"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "11"
+        ]
+      },
+      "source_note": "P&L row XII",
+      "needs_judge": false
+    },
+    {
+      "id": "pl-09",
+      "category": "pnl_lookup",
+      "difficulty": "medium",
+      "request": {
+        "question": "What was other equity as at 31 March 2024?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Other equity as at 31.03.2024 was (344,497.13) ₹ million, i.e. negative [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "344,497.13"
+          ]
+        ],
+        "must_not_contain": [
+          "341,152.55"
+        ],
+        "expected_pages": [
+          "11"
+        ]
+      },
+      "source_note": "P&L row XIII, only filled in the Year Ended 31.03.2024 column",
+      "needs_judge": false
+    },
+    {
+      "id": "pl-10",
+      "category": "pnl_lookup",
+      "difficulty": "medium",
+      "request": {
+        "question": "What was the total comprehensive income for the quarter ended 31 December 2024?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Total comprehensive income for the quarter ended 31.12.2024 was (24,925.55) ₹ million (a loss), after other comprehensive income of (26.99) ₹ million [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "24,925.55"
+          ]
+        ],
+        "must_not_contain": [
+          "71,455.32"
+        ],
+        "expected_pages": [
+          "11"
+        ]
+      },
+      "source_note": "P&L row XI (different from row IX loss for the period)",
+      "needs_judge": false
+    },
+    {
+      "id": "pl-11",
+      "category": "pnl_comparison",
+      "difficulty": "medium",
+      "request": {
+        "question": "How did employee benefits expense in the December 2024 quarter compare with the December 2023 quarter?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Employee benefits expense fell from 57.21 ₹ million in the quarter ended 31.12.2023 to 23.53 ₹ million in the quarter ended 31.12.2024 [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "23.53"
+          ],
+          [
+            "57.21"
+          ]
+        ],
+        "must_not_contain": [
+          "26.70"
+        ],
+        "expected_pages": [
+          "11"
+        ]
+      },
+      "source_note": "P&L row IV(e), columns Quarter Ended 31.12.2024 and 31.12.2023",
+      "needs_judge": false
+    },
+    {
+      "id": "pl-12",
+      "category": "pnl_lookup",
+      "difficulty": "easy",
+      "request": {
+        "question": "What was the loss for the full financial year ended 31 March 2024?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "The loss for the year ended 31.03.2024 (audited) was (83,562.31) ₹ million [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "83,562.31"
+          ]
+        ],
+        "must_not_contain": [
+          "83,636.90"
+        ],
+        "expected_pages": [
+          "11"
+        ]
+      },
+      "source_note": "P&L row IX, Year Ended 31.03.2024",
+      "needs_judge": false
+    },
+    {
+      "id": "seg-01",
+      "category": "segment",
+      "difficulty": "easy",
+      "request": {
+        "question": "How much revenue did the crude oil and natural gas segment earn in the December 2024 quarter?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Crude Oil and Natural Gas segment revenue for the quarter ended 31.12.2024 was 1,480.99 ₹ million [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "12",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "1,480.99"
+          ]
+        ],
+        "must_not_contain": [
+          "1,578.39"
+        ],
+        "expected_pages": [
+          "12"
+        ]
+      },
+      "source_note": "Segment table, i) Segment Revenue",
+      "needs_judge": false
+    },
+    {
+      "id": "seg-02",
+      "category": "segment",
+      "difficulty": "medium",
+      "request": {
+        "question": "What was the consumer electronics and home appliances segment revenue for the nine months ended December 2024?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Consumer Electronics and Home Appliances segment revenue for the nine months ended 31.12.2024 was 278.92 ₹ million [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "12",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "278.92"
+          ]
+        ],
+        "must_not_contain": [
+          "95.98",
+          "275.74"
+        ],
+        "expected_pages": [
+          "12"
+        ]
+      },
+      "source_note": "Segment table, i) Segment Revenue, Nine Months Ended 31.12.2024",
+      "needs_judge": false
+    },
+    {
+      "id": "seg-03",
+      "category": "segment",
+      "difficulty": "medium",
+      "request": {
+        "question": "What was the segment result before finance cost and tax for Q3 FY25?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "The loss before finance cost and tax for the quarter ended 31.12.2024 was (874.94) ₹ million, all reported as unallocable [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "12",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "874.94"
+          ]
+        ],
+        "must_not_contain": [
+          "898.48"
+        ],
+        "expected_pages": [
+          "12"
+        ]
+      },
+      "source_note": "Segment table, ii) Segment Results, Unallocable / Total",
+      "needs_judge": false
+    },
+    {
+      "id": "seg-04",
+      "category": "segment",
+      "difficulty": "hard",
+      "request": {
+        "question": "What was the total capital employed as at 31 March 2024?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Total capital employed (segment assets minus segment liabilities) as at 31.03.2024 was 341,152.55 ₹ million, shown entirely as unallocable [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "12",
+            "kind": "fact or table"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "341,152.55",
+            "341,153"
+          ]
+        ],
+        "must_not_contain": [
+          "344,497.13"
+        ],
+        "expected_pages": [
+          "12"
+        ]
+      },
+      "source_note": "Segment table, iii) Capital Employed, Year Ended 31.03.2024 (only column with a value)",
+      "needs_judge": false
+    },
+    {
+      "id": "calc-01",
+      "category": "calculation",
+      "difficulty": "hard",
+      "request": {
+        "question": "What was the net loss in Q1 FY25?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Calculated: (22,398.34) ₹ million. Nine months ended 31.12.2024 (71,401.31) [S1] minus quarter ended 30.09.2024 (24,104.41) [S1] minus quarter ended 31.12.2024 (24,898.56) [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "22,398.34"
+          ],
+          [
+            "calculat"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "11"
+        ],
+        "calculated": true
+      },
+      "source_note": "Not printed. 71,401.31 - 24,104.41 - 24,898.56 = 22,398.34",
+      "needs_judge": true,
+      "judge_focus": "check working + 'calculated' label"
+    },
+    {
+      "id": "calc-02",
+      "category": "calculation",
+      "difficulty": "hard",
+      "request": {
+        "question": "What was the revenue from operations in the first half of FY25?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Calculated: 3,278.54 ₹ million for H1 FY25 (six months ended 30.09.2024). Nine months ended 31.12.2024 revenue 4,855.51 [S1] minus quarter ended 31.12.2024 revenue 1,576.97 [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "3,278.54"
+          ],
+          [
+            "calculat"
+          ]
+        ],
+        "must_not_contain": [
+          "3,240.69"
+        ],
+        "expected_pages": [
+          "11"
+        ],
+        "calculated": true
+      },
+      "source_note": "Not printed. 4,855.51 - 1,576.97 = 3,278.54. A model slip gave 3,240.69 in an earlier run.",
+      "needs_judge": true,
+      "judge_focus": "check working + 'calculated' label"
+    },
+    {
+      "id": "calc-03",
+      "category": "calculation",
+      "difficulty": "hard",
+      "request": {
+        "question": "What was the revenue from operations in Q1 FY25?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Calculated: 1,614.82 ₹ million. Nine months ended 31.12.2024 revenue 4,855.51 [S1] minus quarter ended 30.09.2024 1,663.72 [S1] minus quarter ended 31.12.2024 1,576.97 [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "1,614.82"
+          ],
+          [
+            "calculat"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "11"
+        ],
+        "calculated": true
+      },
+      "source_note": "Not printed. 4,855.51 - 1,663.72 - 1,576.97 = 1,614.82",
+      "needs_judge": true,
+      "judge_focus": "check working + 'calculated' label"
+    },
+    {
+      "id": "calc-04",
+      "category": "calculation",
+      "difficulty": "medium",
+      "request": {
+        "question": "By how much did finance costs increase from the September 2024 quarter to the December 2024 quarter?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Calculated: finance costs rose by 817.69 ₹ million, from 23,205.93 ₹ million (quarter ended 30.09.2024) to 24,023.62 ₹ million (quarter ended 31.12.2024) [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "817.69"
+          ],
+          [
+            "23,205.93"
+          ],
+          [
+            "24,023.62"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "11"
+        ],
+        "calculated": true
+      },
+      "source_note": "24,023.62 - 23,205.93 = 817.69",
+      "needs_judge": true,
+      "judge_focus": "check working + 'calculated' label"
+    },
+    {
+      "id": "calc-05",
+      "category": "period_mapping",
+      "difficulty": "medium",
+      "request": {
+        "question": "What was the combined loss in the first three quarters of FY25?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "(71,401.31) ₹ million - this is printed as the loss for the nine months ended 31.12.2024, which covers Q1+Q2+Q3 FY25 [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "71,401.31"
+          ]
+        ],
+        "must_not_contain": [
+          "I could not find"
+        ],
+        "expected_pages": [
+          "11"
+        ]
+      },
+      "source_note": "Printed directly: Nine Months Ended 31.12.2024 = Q1+Q2+Q3",
+      "needs_judge": false
+    },
+    {
+      "id": "calc-06",
+      "category": "ambiguous_period",
+      "difficulty": "hard",
+      "request": {
+        "question": "What was the loss for the last 6 months?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Calculated, taking the last 6 months as Q2 + Q3 FY25 (1 Jul to 31 Dec 2024): (24,104.41) + (24,898.56) = (49,002.97) ₹ million [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "11",
+            "kind": "fact"
+          }
+        ]
+      },
+      "checks": {
+        "accept_any_of": [
+          {
+            "interpretation": "Q2+Q3 FY25 (Jul-Dec 2024)",
+            "must_contain": [
+              [
+                "49,002.97"
+              ]
+            ]
+          },
+          {
+            "interpretation": "H1 FY25 (Apr-Sep 2024)",
+            "must_contain": [
+              [
+                "46,502.75"
+              ]
+            ]
+          }
+        ],
+        "must_contain": [
+          [
+            "calculat"
+          ]
+        ],
+        "expected_pages": [
+          "11"
+        ],
+        "calculated": true
+      },
+      "source_note": "Ambiguous. Q2+Q3 = 24,104.41 + 24,898.56 = 49,002.97; H1 = 71,401.31 - 24,898.56 = 46,502.75. Answer must say which period it used.",
+      "needs_judge": true,
+      "judge_focus": "check chosen period is stated"
+    },
+    {
+      "id": "txt-01",
+      "category": "prose_fact",
+      "difficulty": "easy",
+      "request": {
+        "question": "Since when has trading in the company's shares been suspended?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Trading in the company's securities has been suspended on BSE and NSE since June 16, 2021 [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "1",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "June 16, 2021",
+            "16 June 2021",
+            "16-06-2021",
+            "16.06.2021"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "1"
+        ]
+      },
+      "source_note": "Cover letter, page 1",
+      "needs_judge": false
+    },
+    {
+      "id": "txt-02",
+      "category": "prose_fact",
+      "difficulty": "easy",
+      "request": {
+        "question": "Who is the Resolution Professional of the company?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Mr. Abhijit Guhathakurta is the Resolution Professional for the 13 Videocon Group Entities, including the company [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "1",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "Guhathakurta"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "1",
+          "2",
+          "5",
+          "12",
+          "13"
+        ]
+      },
+      "source_note": "Cover letter p1-2, auditor report p5 (c), notes p12 c)",
+      "needs_judge": false
+    },
+    {
+      "id": "txt-03",
+      "category": "prose_fact",
+      "difficulty": "medium",
+      "request": {
+        "question": "When was the insolvency process (CIRP) against the company admitted, and who was first appointed as resolution professional?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "NCLT Mumbai admitted the CIRP application (under Section 7 of the IBC) by an order dated June 6, 2018, and appointed Mr. Anuj Jain as the insolvency resolution professional [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "4",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "June 6, 2018",
+            "6 June 2018",
+            "06.06.2018"
+          ],
+          [
+            "Anuj Jain"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "4",
+          "12"
+        ]
+      },
+      "source_note": "Auditor report 2(a) p4; notes a) p12",
+      "needs_judge": false
+    },
+    {
+      "id": "txt-04",
+      "category": "prose_fact",
+      "difficulty": "medium",
+      "request": {
+        "question": "Whose resolution plan did the Committee of Creditors approve, and with what voting share?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "The CoC approved the resolution plan submitted by Twin Star Technologies Limited with a 95.09% majority voting share [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "5",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "Twin Star"
+          ],
+          [
+            "95.09"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "5",
+          "12"
+        ]
+      },
+      "source_note": "Auditor report 2(d) p5; notes d) p12",
+      "needs_judge": false
+    },
+    {
+      "id": "txt-05",
+      "category": "prose_fact",
+      "difficulty": "hard",
+      "request": {
+        "question": "Which tribunal stayed the NCLT order approving the resolution plan, and on what date?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "The National Company Law Appellate Tribunal (NCLAT), New Delhi stayed the operation of the NCLT Approval Order by its order dated July 19, 2021 [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "5",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "NCLAT",
+            "Appellate"
+          ],
+          [
+            "July 19, 2021",
+            "19 July 2021",
+            "19.07.2021"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "5",
+          "12"
+        ]
+      },
+      "source_note": "Auditor report 2(f) p5; notes e) p12. Sensitive to the NCLT/NCLAT transcription errors seen earlier.",
+      "needs_judge": false
+    },
+    {
+      "id": "txt-06",
+      "category": "prose_fact",
+      "difficulty": "hard",
+      "request": {
+        "question": "What happened to the NCLT approval of the resolution plan in January 2022?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "By its final order dated January 05, 2022, the NCLAT set aside the Approval Order and sent the matter back to the CoC to complete the CIRP; the CoC then decided on January 12, 2022 to invite fresh expressions of interest [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "5",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "set aside"
+          ],
+          [
+            "January 05, 2022",
+            "January 5, 2022",
+            "5 January 2022",
+            "05.01.2022"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "5",
+          "12"
+        ]
+      },
+      "source_note": "Auditor report 2(f)-(g) p5; notes e) p12",
+      "needs_judge": false
+    },
+    {
+      "id": "txt-07",
+      "category": "prose_fact",
+      "difficulty": "hard",
+      "request": {
+        "question": "What are the Supreme Court civil appeal numbers filed by Twin Star Technologies?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Twin Star Technologies challenged the NCLAT Final Order in Civil Appeals numbers 509, 512 and 894 of 2022 before the Supreme Court [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "6",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "509"
+          ],
+          [
+            "512"
+          ],
+          [
+            "894"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "6",
+          "12"
+        ]
+      },
+      "source_note": "Auditor report 2(h) p6 (OCR page); notes f) p12",
+      "needs_judge": false
+    },
+    {
+      "id": "txt-08",
+      "category": "prose_fact",
+      "difficulty": "medium",
+      "request": {
+        "question": "Who is the statutory auditor and what kind of conclusion did they give on these results?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "The auditor, GAMP & Co., Chartered Accountants, issued a Disclaimer of Conclusion: they could not obtain sufficient appropriate evidence, so they did not express a conclusion on the Statement [S1][S2].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "10",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "GAMP",
+            "G A M P"
+          ],
+          [
+            "disclaimer"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "4",
+          "6",
+          "10"
+        ]
+      },
+      "source_note": "Auditor letterhead p4; para 3 p6; para 6 p10",
+      "needs_judge": true,
+      "judge_focus": "open explanation"
+    },
+    {
+      "id": "txt-09",
+      "category": "prose_fact",
+      "difficulty": "medium",
+      "request": {
+        "question": "Who audited the previous period's figures and what opinion did they give?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "The predecessor auditor, M/s KVA & Company, reviewed/audited the corresponding figures (quarter and nine months ended 31.12.2023 and year ended 31.03.2024) and expressed a Disclaimer of Opinion [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "10",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "KVA"
+          ],
+          [
+            "disclaimer"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "10"
+        ]
+      },
+      "source_note": "Auditor report para 7 Other Matters, p10 (OCR page)",
+      "needs_judge": true,
+      "judge_focus": "open explanation"
+    },
+    {
+      "id": "txt-10",
+      "category": "prose_reasoning",
+      "difficulty": "medium",
+      "request": {
+        "question": "Why were these financial results submitted late?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Because of the ongoing CIRP and related constraints: resignation of key accounting personnel, non-availability of pre-CIRP records, lack of cooperation from the promoters and erstwhile management, and the change of auditor [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "1",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "accounting personnel",
+            "resignation"
+          ],
+          [
+            "pre-CIRP records",
+            "records"
+          ],
+          [
+            "auditor"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "1"
+        ]
+      },
+      "source_note": "Cover letter p1",
+      "needs_judge": true,
+      "judge_focus": "open explanation"
+    },
+    {
+      "id": "txt-11",
+      "category": "prose_fact",
+      "difficulty": "medium",
+      "request": {
+        "question": "What is the Ravva Oil and Gas Field and how were its figures included?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Ravva Oil and Gas Field is an unincorporated joint venture. Its figures were included based on information provided by the Operator / Joint Venture and were not independently audited or reviewed for the quarter [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "9",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "joint venture"
+          ],
+          [
+            "Operator",
+            "not been subjected",
+            "not audited",
+            "not independently"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "9"
+        ]
+      },
+      "source_note": "Auditor report 5(s) p9",
+      "needs_judge": true,
+      "judge_focus": "open explanation"
+    },
+    {
+      "id": "txt-12",
+      "category": "prose_fact",
+      "difficulty": "easy",
+      "request": {
+        "question": "What business segments does the company operate in?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Two segments: (i) Consumer Electronics & Home Appliances (including rental income from assets) and (ii) Oil & Natural Gas [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "13",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "Consumer Electronics"
+          ],
+          [
+            "Oil"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "12",
+          "13"
+        ]
+      },
+      "source_note": "Note xiii) p13; segment table p12",
+      "needs_judge": false
+    },
+    {
+      "id": "txt-13",
+      "category": "prose_reasoning",
+      "difficulty": "medium",
+      "request": {
+        "question": "Is there any doubt about the company continuing as a going concern?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "Yes. The auditor reports a material uncertainty about the company's ability to continue as a going concern: operations have declined, net worth is negative, losses continue and it is a co-obligor on other borrowers' loans; it depends on the resolution plan. The results are still prepared on a going concern basis because the company is run as a going concern under CIRP [S1][S2].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "9",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "material uncertainty",
+            "uncertainty"
+          ],
+          [
+            "going concern"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "9",
+          "13"
+        ]
+      },
+      "source_note": "Auditor report 5(p) p9; note vii) p13",
+      "needs_judge": true,
+      "judge_focus": "open explanation"
+    },
+    {
+      "id": "txt-14",
+      "category": "prose_fact",
+      "difficulty": "medium",
+      "request": {
+        "question": "On what date did the Resolution Professional sign the financial results, given there was no board meeting?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "The Resolution Professional signed the financials on 10 February 2026; no board meeting was held because the board's powers are vested in the RP under the IBC [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "2",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "10th February, 2026",
+            "10 February 2026",
+            "February 10, 2026",
+            "10th February 2026",
+            "10.02.2026"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "2",
+          "13"
+        ]
+      },
+      "source_note": "Cover letter p2; signature block p13",
+      "needs_judge": false
+    },
+    {
+      "id": "txt-15",
+      "category": "prose_fact",
+      "difficulty": "medium",
+      "request": {
+        "question": "How many Videocon group companies are in the consolidated insolvency process?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "13 companies: Videocon Industries Limited together with 12 other Videocon group companies (the 'Videocon Group Entities') [S1].",
+        "sources": [
+          {
+            "file_name": "Videocon-Financial_Results_Dec-24.pdf",
+            "pages": "1",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "13",
+            "12 other"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "1",
+          "2",
+          "4",
+          "5",
+          "12"
+        ]
+      },
+      "source_note": "Cover letter p1 ('12 other'), p2 ('13 Videocon Group Companies'); auditor report p4-5",
+      "needs_judge": false
+    },
+    {
+      "id": "neg-01",
+      "category": "not_in_filing",
+      "difficulty": "easy",
+      "request": {
+        "question": "What dividend per share did the company declare?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "I could not find this in the ingested filings.",
+        "sources": []
+      },
+      "checks": {
+        "expect_not_found": true
+      },
+      "source_note": "No dividend is mentioned anywhere in the filing",
+      "needs_judge": false
+    },
+    {
+      "id": "neg-02",
+      "category": "not_in_filing",
+      "difficulty": "medium",
+      "request": {
+        "question": "What was the revenue for the quarter ended 31 March 2025?",
+        "company": "Videocon Industries Ltd"
+      },
+      "expected_response": {
+        "answer": "I could not find this in the ingested filings.",
+        "sources": []
+      },
+      "checks": {
+        "expect_not_found": true,
+        "must_not_contain": [
+          "1,576.97",
+          "6,512.24"
+        ]
+      },
+      "source_note": "Q4 FY25 is after this filing's period; must not reuse another column",
+      "needs_judge": false
+    },
+    {
+      "id": "neg-03",
+      "category": "not_in_filing",
+      "difficulty": "easy",
+      "request": {
+        "question": "What is Videocon's current share price?"
+      },
+      "expected_response": {
+        "answer": "I could not find this in the ingested filings.",
+        "sources": []
+      },
+      "checks": {
+        "expect_not_found": true
+      },
+      "source_note": "Share price is not in the filing (trading is suspended)",
+      "needs_judge": false
+    },
+    {
+      "id": "neg-04",
+      "category": "not_in_filing",
+      "difficulty": "medium",
+      "request": {
+        "question": "What was Tata Motors' net profit for the December 2024 quarter?"
+      },
+      "expected_response": {
+        "answer": "I could not find this in the ingested filings.",
+        "sources": []
+      },
+      "checks": {
+        "expect_not_found": true,
+        "must_not_contain": [
+          "24,898.56"
+        ]
+      },
+      "source_note": "Different company, not ingested; must not answer with Videocon figures",
+      "needs_judge": false
+    }
+  ]
+}

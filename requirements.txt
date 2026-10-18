@@ -1,0 +1,14 @@
+# PDF reading and page rendering
+pymupdf==1.28.2
+# Google Gemini SDK (vision transcription + embeddings)
+google-genai==2.31.0
+# Loads API keys from a local .env file
+python-dotenv==1.2.4
+# Qdrant vector database client
+qdrant-client==1.19.1
+# Web API
+fastapi==0.143.3
+uvicorn[standard]==0.54.0
+python-multipart==0.0.32
+# Postgres driver (company metadata)
+psycopg[binary]==3.3.6

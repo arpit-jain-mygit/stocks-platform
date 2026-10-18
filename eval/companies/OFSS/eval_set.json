@@ -1,0 +1,814 @@
+{
+  "company_id": "OFSS",
+  "name": "stocks-rag eval set - Oracle Financial Services Software Ltd (OFSS), Annual Report 2025-26",
+  "description": "Hand-made from the original PDF text (not from the app's output). Requests filter on company OFSS (and period FY26 where the answer is in this report).",
+  "document": {
+    "file_name": "ofss-software-limited-ar-2025-26.pdf",
+    "company": "Oracle Financial Services Software Ltd",
+    "period": "FY26 (year ended 31-Mar-2026)",
+    "doc_type": "annual_report",
+    "units": "Rs million unless stated"
+  },
+  "how_to_grade": {
+    "must_contain": "Every inner list is one required fact; the answer passes it if it contains ANY of the strings in that list (case-insensitive). All inner lists must pass.",
+    "must_not_contain": "None of these strings may appear (catches wrong columns / wrong numbers).",
+    "expected_pages": "At least one returned source must have one of these page values (sources[].pages can be a range like '1-2'; count it if the range covers the page).",
+    "expect_not_found": "true = the answer must be the not-found reply ('I could not find this in the ingested filings.') and must not invent a figure.",
+    "calculated": "true = the figure is NOT printed in the filing; the answer should derive it and say it is calculated.",
+    "accept_any_of": "For ambiguous questions: the answer passes if it matches any one listed interpretation AND states which period it used.",
+    "needs_judge": "true = deterministic checks are not enough on their own; an LLM judge should also review the answer (see judge_focus)."
+  },
+  "cases": [
+    {
+      "id": "ofss-01",
+      "category": "highlights_lookup",
+      "difficulty": "easy",
+      "request": {
+        "question": "What was OFSS's consolidated revenue from operations for FY26?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Consolidated revenue from operations for the year ended 31 March 2026 was ₹ 76,721 million (about ₹ 76.7 billion), up 12% from ₹ 68,468 million [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "8",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "76,721",
+            "76.7"
+          ]
+        ],
+        "must_not_contain": [
+          "57,167"
+        ],
+        "expected_pages": [
+          "3",
+          "8"
+        ]
+      },
+      "source_note": "Financial highlights (consolidated), p8; letter p3 says ₹76.7 billion",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-02",
+      "category": "highlights_lookup",
+      "difficulty": "easy",
+      "request": {
+        "question": "What was the consolidated net profit for FY26?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Consolidated profit for the year ended 31 March 2026 was ₹ 26,393 million, up 11% from ₹ 23,796 million [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "8",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "26,393",
+            "26.4"
+          ]
+        ],
+        "must_not_contain": [
+          "27,746"
+        ],
+        "expected_pages": [
+          "3",
+          "8"
+        ]
+      },
+      "source_note": "p8 consolidated highlights; p3 says net income ₹26.4 billion, +11%",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-03",
+      "category": "highlights_lookup",
+      "difficulty": "easy",
+      "request": {
+        "question": "By what percentage did consolidated revenue grow in FY26?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Consolidated revenue grew 12% year-on-year, to ₹ 76,721 million from ₹ 68,468 million [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "8",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "12%",
+            "12 %",
+            "12 percent"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "3",
+          "8"
+        ]
+      },
+      "source_note": "p3 and p8",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-04",
+      "category": "highlights_lookup",
+      "difficulty": "easy",
+      "request": {
+        "question": "What was OFSS's standalone revenue from operations for FY26?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Standalone revenue from operations for FY26 was ₹ 57,167 million, up 12% from ₹ 50,991 million [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "8",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "57,167"
+          ]
+        ],
+        "must_not_contain": [
+          "76,721"
+        ],
+        "expected_pages": [
+          "8",
+          "133"
+        ]
+      },
+      "source_note": "p8 standalone highlights; p133 standalone P&L",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-05",
+      "category": "highlights_lookup",
+      "difficulty": "medium",
+      "request": {
+        "question": "What was the standalone net profit for FY26 and how did it change from the previous year?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Standalone profit for FY26 was ₹ 27,746 million, down 17% from ₹ 33,507 million in FY25 [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "8",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "27,746"
+          ],
+          [
+            "17%",
+            "17 %"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "8",
+          "133"
+        ]
+      },
+      "source_note": "p8: 'down by 17%'; p133 standalone P&L",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-06",
+      "category": "highlights_lookup",
+      "difficulty": "medium",
+      "request": {
+        "question": "Why did standalone total income fall in FY26 even though revenue grew?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Other income dropped from ₹ 17,210 million to ₹ 6,800 million, so standalone total income fell from ₹ 68,201 million to ₹ 63,967 million despite revenue rising to ₹ 57,167 million [S1]. (The cash flow shows dividend from subsidiaries fell from ₹ 15,199 million to ₹ 4,334 million.)",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "8",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "6,800"
+          ],
+          [
+            "17,210"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "8",
+          "133"
+        ]
+      },
+      "source_note": "p8 standalone highlights",
+      "needs_judge": true,
+      "judge_focus": "explanation: other income fell"
+    },
+    {
+      "id": "ofss-07",
+      "category": "statement_lookup",
+      "difficulty": "hard",
+      "request": {
+        "question": "What was OFSS's standalone total assets as at 31 March 2026?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Standalone total assets were ₹ 78,633 million as at 31 March 2026 (₹ 83,280 million a year earlier) [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "132",
+            "kind": "table"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "78,633"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "132"
+        ]
+      },
+      "source_note": "Standalone balance sheet p132 (typed table page)",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-08",
+      "category": "statement_lookup",
+      "difficulty": "hard",
+      "request": {
+        "question": "What was the standalone basic earnings per share for FY26?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Standalone basic EPS for FY26 was ₹ 319.10 (diluted ₹ 317.60), face value ₹ 5 [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "133",
+            "kind": "table"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "319.10"
+          ]
+        ],
+        "must_not_contain": [
+          "303.54"
+        ],
+        "expected_pages": [
+          "133"
+        ]
+      },
+      "source_note": "Standalone P&L p133 (typed table page)",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-09",
+      "category": "statement_lookup",
+      "difficulty": "hard",
+      "request": {
+        "question": "What was the consolidated basic earnings per share for FY26?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Consolidated basic EPS for FY26 was ₹ 303.54 (diluted ₹ 302.11) [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "63",
+            "kind": "table"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "303.54"
+          ]
+        ],
+        "must_not_contain": [
+          "319.10"
+        ],
+        "expected_pages": [
+          "63",
+          "91"
+        ]
+      },
+      "source_note": "Consolidated P&L p63; note 23 p91",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-10",
+      "category": "prose_fact",
+      "difficulty": "easy",
+      "request": {
+        "question": "What dividends did OFSS declare for FY26?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "1st interim dividend of ₹ 130 per share (17 Oct 2025) and 2nd interim dividend of ₹ 270 per share (22 Apr 2026), face value ₹ 5; no additional final dividend was recommended [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "8",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "130"
+          ],
+          [
+            "270"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "8"
+        ]
+      },
+      "source_note": "Directors' report p8",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-11",
+      "category": "calculation",
+      "difficulty": "medium",
+      "request": {
+        "question": "What was the total dividend per share declared for FY26?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Calculated: ₹ 400 per share = 1st interim ₹ 130 + 2nd interim ₹ 270 [S1]; no final dividend.",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "8",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "400"
+          ],
+          [
+            "calculat"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "8"
+        ],
+        "calculated": true
+      },
+      "source_note": "Not printed as a total: 130 + 270 = 400",
+      "needs_judge": true,
+      "judge_focus": "check sum and 'calculated' label"
+    },
+    {
+      "id": "ofss-12",
+      "category": "prose_fact",
+      "difficulty": "easy",
+      "request": {
+        "question": "Who are the statutory auditors of OFSS?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "S. R. Batliboi & Associates LLP, Chartered Accountants (firm reg. no. 101049W/E300004), appointed for five years from the 33rd AGM (3 Aug 2022) to the 38th AGM in 2027 [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "11",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "Batliboi"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "7",
+          "11"
+        ]
+      },
+      "source_note": "p11 Auditors; p7 corporate information",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-13",
+      "category": "prose_fact",
+      "difficulty": "easy",
+      "request": {
+        "question": "Who is the Managing Director and CEO of OFSS?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Makarand Padalkar is the Managing Director and Chief Executive Officer [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "7",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "Padalkar"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "7",
+          "9"
+        ]
+      },
+      "source_note": "p7 board of directors; p9 KMP",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-14",
+      "category": "prose_fact",
+      "difficulty": "easy",
+      "request": {
+        "question": "Who chairs the OFSS board?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Jane Murphy is the Chairperson of the Board [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "7",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "Jane Murphy"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "7",
+          "9"
+        ]
+      },
+      "source_note": "p7 board of directors; also stated on p9 (appointed Chairperson w.e.f. 1 Apr 2025)",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-15",
+      "category": "prose_fact",
+      "difficulty": "medium",
+      "request": {
+        "question": "Who were the Key Managerial Personnel of OFSS as on 31 March 2026?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Makarand Padalkar (MD & CEO), Avadhut Ketkar (CFO) and Onkarnath Banerjee (Company Secretary & Compliance Officer); no changes during the year [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "9",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "Padalkar"
+          ],
+          [
+            "Ketkar"
+          ],
+          [
+            "Banerjee"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "9"
+        ]
+      },
+      "source_note": "p9 Key Managerial Personnel",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-16",
+      "category": "prose_fact",
+      "difficulty": "medium",
+      "request": {
+        "question": "Who is the holding company of OFSS and what stake does it hold?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Oracle Global (Mauritius) Limited holds 63,051,197 shares, 72.44% as at 31 March 2026 (72.59% a year earlier); Oracle Corporation is the ultimate holding company [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "84",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "Oracle Global (Mauritius)",
+            "Oracle Global"
+          ],
+          [
+            "72.44"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "84",
+          "85"
+        ]
+      },
+      "source_note": "p84 shareholding note; p85 ultimate holding company",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-17",
+      "category": "prose_fact",
+      "difficulty": "medium",
+      "request": {
+        "question": "How much did OFSS spend on CSR in FY26?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "₹ 655 million total spent for the year (₹ 648 million on CSR projects + administrative overheads and impact assessment), against a total CSR obligation of ₹ 624 million [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "21",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "648",
+            "655"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "21",
+          "22"
+        ]
+      },
+      "source_note": "CSR annexure p21: projects 648; total spent (a)+(b)+(c) = 655; obligation 624",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-18",
+      "category": "prose_fact",
+      "difficulty": "easy",
+      "request": {
+        "question": "When is the OFSS annual general meeting for 2026?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Thursday, July 23, 2026 at 3:00 p.m. IST, by video conferencing / other audio-visual means [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "5",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "July 23, 2026",
+            "23 July 2026",
+            "23-07-2026"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "5",
+          "181",
+          "182",
+          "183",
+          "184"
+        ]
+      },
+      "source_note": "p5 AGM details; also in the AGM notice pp181-184",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-19",
+      "category": "prose_fact",
+      "difficulty": "easy",
+      "request": {
+        "question": "Where is the registered office of OFSS and what is its CIN?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Oracle Park, Off Western Express Highway, Goregaon (East), Mumbai 400063, Maharashtra; CIN L72200MH1989PLC053666 [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "7",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "Goregaon"
+          ],
+          [
+            "L72200MH1989PLC053666"
+          ]
+        ],
+        "must_not_contain": [],
+        "expected_pages": [
+          "7"
+        ]
+      },
+      "source_note": "p7 corporate information",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-20",
+      "category": "ratio_lookup",
+      "difficulty": "hard",
+      "request": {
+        "question": "What was OFSS's consolidated net profit ratio and current ratio for FY26?",
+        "company": "OFSS",
+        "period": "FY26"
+      },
+      "expected_response": {
+        "answer": "Consolidated net profit ratio 34% (35% in FY25) and current ratio 5 times (7 times in FY25) [S1].",
+        "sources": [
+          {
+            "file_name": "ofss-software-limited-ar-2025-26.pdf",
+            "pages": "46",
+            "kind": "prose"
+          }
+        ]
+      },
+      "checks": {
+        "must_contain": [
+          [
+            "34%"
+          ],
+          [
+            "5 times"
+          ]
+        ],
+        "must_not_contain": [
+          "49%"
+        ],
+        "expected_pages": [
+          "3",
+          "46"
+        ]
+      },
+      "source_note": "Ratios table p46 (consolidated vs standalone columns)",
+      "needs_judge": true,
+      "judge_focus": "consolidated vs standalone columns"
+    },
+    {
+      "id": "ofss-neg-01",
+      "category": "not_in_filing",
+      "difficulty": "medium",
+      "request": {
+        "question": "What was OFSS's revenue for the quarter ended 30 June 2026?",
+        "company": "OFSS"
+      },
+      "expected_response": {
+        "answer": "I could not find this in the ingested filings.",
+        "sources": []
+      },
+      "checks": {
+        "expect_not_found": true,
+        "must_not_contain": [
+          "76,721",
+          "57,167"
+        ]
+      },
+      "source_note": "Q1 FY27 is after this annual report",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-neg-02",
+      "category": "not_in_filing",
+      "difficulty": "easy",
+      "request": {
+        "question": "What is OFSS's current share price?",
+        "company": "OFSS"
+      },
+      "expected_response": {
+        "answer": "I could not find this in the ingested filings.",
+        "sources": []
+      },
+      "checks": {
+        "expect_not_found": true
+      },
+      "source_note": "Share price is not in the annual report",
+      "needs_judge": false
+    },
+    {
+      "id": "ofss-leak-01",
+      "category": "company_leakage",
+      "difficulty": "hard",
+      "request": {
+        "question": "What was the net loss for the quarter ended 31 December 2024?",
+        "company": "OFSS"
+      },
+      "expected_response": {
+        "answer": "I could not find this in the ingested filings.",
+        "sources": []
+      },
+      "checks": {
+        "expect_not_found": true,
+        "must_not_contain": [
+          "24,898.56",
+          "Videocon"
+        ]
+      },
+      "source_note": "Asked about OFSS: Videocon's Q3 FY25 loss must NOT be used",
+      "needs_judge": false
+    }
+  ]
+}
