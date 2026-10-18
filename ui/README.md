@@ -74,11 +74,28 @@ npm run build
 
 The build goes to `dist/stocks-ui/browser/` (what Vercel serves).
 
-## Deploy to Vercel (later)
+## Deploy to Vercel
 
-- Import the GitHub repo `stocks-platform`, **Root Directory = `ui`**, framework preset **Angular**.
-- Output directory: `dist/stocks-ui/browser`.
-- Environment variables: `STOCKS_API_URL` (Railway URL) and `STOCKS_API_KEY` (Railway `APP_API_KEY`) -
-  read only by `api/proxy.ts` on the server.
-- Never put `APP_API_KEY` in this code - everything here is visible to visitors. Call the backend
-  through a Vercel server route (or user login) instead.
+1. vercel.com -> **Add New -> Project** -> import the GitHub repo **`stocks-platform`**.
+2. Configure the project:
+   - **Root Directory**: `ui` (click Edit next to it)
+   - **Framework Preset**: Angular (detected)
+   - **Build Command**: `npm run build` (default) - **Output Directory**: `dist/stocks-ui/browser`
+3. **Environment Variables** (read only by `api/proxy.ts`, on Vercel's servers - never sent to the browser):
+   - `STOCKS_API_URL` = `https://stocks-platform-production.up.railway.app` (no trailing slash)
+   - `STOCKS_API_KEY` = the Railway service's `APP_API_KEY`
+4. **Deploy**. Every push to `main` that touches `ui/` redeploys (Settings -> Git -> Ignored Build Step:
+   "Only build if there are changes in a folder" -> `ui`).
+
+Check (replace the domain):
+
+```bash
+curl -s "https://<your-app>.vercel.app/api/companies?ingested=true"
+```
+
+Should list the companies (no key needed: the proxy adds it). Then open the site, click a company,
+try the chat. `curl -s -X POST https://<your-app>.vercel.app/api/backup/create` must return 404.
+
+Troubleshooting: `500 Server is missing STOCKS_API_URL / STOCKS_API_KEY` = add the variables, then
+Redeploy (variables apply to new deployments only). `401` = `STOCKS_API_KEY` differs from Railway's
+`APP_API_KEY`. Logs: Vercel project -> **Logs** (filter by `/api/proxy`).

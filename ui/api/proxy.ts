@@ -10,6 +10,10 @@
 //   STOCKS_API_KEY   the backend's APP_API_KEY
 // Locally, proxy.conf.mjs does the same job for `npm start`.
 
+// Vercel provides `process.env` on the server; this line tells TypeScript it exists
+// (the Angular project has no Node.js type definitions).
+declare const process: { env: Record<string, string | undefined> };
+
 // --- Which calls the UI may make: "METHOD path" ------------------------------------------
 const ALLOWED = new Set(['GET companies', 'GET doc-types', 'GET documents', 'POST ask']);
 // Plus one company's page: GET companies/<code> (starts with a letter or digit; then letters, digits, . _ -).
@@ -27,8 +31,8 @@ export async function forward(request: Request): Promise<Response> {
   if (!isAllowed(request.method, path)) {
     return Response.json({ detail: 'Not available' }, { status: 404 });
   }
-  const backend = process.env.STOCKS_API_URL;
-  const apiKey = process.env.STOCKS_API_KEY;
+  const backend = process.env['STOCKS_API_URL'];
+  const apiKey = process.env['STOCKS_API_KEY'];
   if (!backend || !apiKey) {
     return Response.json({ detail: 'Server is missing STOCKS_API_URL / STOCKS_API_KEY' }, { status: 500 });
   }

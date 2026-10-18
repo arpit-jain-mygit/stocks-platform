@@ -34,9 +34,9 @@
   - [x] Page + vector caches on a Railway volume (or cloud storage) so restarts don't re-call models (volume at `/data`, survives redeploys)
   - [x] `/health` as the health check; run `db/migrate.py` on deploy (pre-deploy command)
 - [ ] **Deploy UI to Vercel**
-  - [ ] UI calls the Railway API URL (env variable per environment)
+  - [x] UI calls the Railway API through `ui/api/proxy.ts` (`STOCKS_API_URL` / `STOCKS_API_KEY` on Vercel)
   - [ ] CORS on the API allows only the Vercel domain(s)
-  - [ ] Never put `APP_API_KEY` in browser code – use a Vercel server route / proxy (or user login) to call the API
+  - [x] Never put `APP_API_KEY` in browser code – Vercel server function `api/proxy.ts` (allowlisted endpoints)
 - [ ] **Users support** (Google login)
 - [ ] **10 companies support**
 - [ ] **Hindi and other languages support**
