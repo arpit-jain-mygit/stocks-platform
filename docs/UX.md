@@ -15,6 +15,7 @@ Related: [features.md](features.md) (roadmap) · [README.md](README.md) (how to 
 - [ ] **4. 👍 / 👎 on answers** – one-click quality signal; thumbs-down answers become new eval cases.
 - [ ] **5. "Ask about this company"** button in the details panel – opens the chat with that company already picked.
 - [ ] **6. Loading skeletons** – grey placeholder cards instead of "Loading…".
+- [ ] **22. Search companies in the chat** – the "Ask a question" window's company picker becomes a type-to-search box (name, NSE / BSE code, alias), instead of a plain dropdown that gets long as companies grow.
 - [ ] **7. Freshness on cards** – e.g. "Latest: FY26 annual report · added 17 Oct", so users know what they can ask about.
 
 ## Make it catchy
