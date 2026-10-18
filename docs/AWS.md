@@ -24,6 +24,7 @@ Related: [README.md](README.md) · [features.md](features.md) · [UX.md](UX.md)
 | 2026-10-18 | Found that the Identity Center account instance has no "Multi-account permissions" (permission sets), so it cannot grant CLI access to the account | Decided on option 2: an IAM user with an access key. The Identity Center user stays unused |
 | 2026-10-18 | Terraform 1.16.6 installed to `~/bin` (Homebrew blocked by outdated Command Line Tools) | `terraform -version` works |
 | 2026-10-18 | Created IAM user `stocks-insights-deploy`, access key, profile `stocks-insights` (region `ap-south-1`, output `json`) | `aws sts get-caller-identity --profile stocks-insights` works |
+| 2026-10-18 | Phase 1 code complete on `aws-serverless`: storage (local/S3), job store (memory/DynamoDB), presigned uploads, Lambda handler (Mangum), Lambda Dockerfile, ECS worker and dispatch, env settings, 158 backend tests passing (AWS calls faked) | Not yet built or run on AWS. Dockerfile.lambda not built (no Docker locally) |
 
 ### Still to do
 
@@ -61,14 +62,14 @@ Related: [README.md](README.md) · [features.md](features.md) · [UX.md](UX.md)
 
 Branch: `aws-serverless`.
 
-- [ ] **1.1 Storage abstraction.** A `Store` interface with a local-folder version (today) and an S3 version. Used by `utils/page_cache.py` and `utils/vector_cache.py`
-- [ ] **1.2 Job store.** Ingestion jobs saved to a `jobs` table (DynamoDB) instead of the in-memory dict in `api/main.py`
-- [ ] **1.3 Presigned uploads.** `POST /uploads` returns a presigned S3 URL; the client uploads there, then calls `POST /ingest` with the S3 key. Removes the 10 MB API Gateway limit
-- [ ] **1.4 Lambda entry point.** `api/lambda_handler.py` wraps the FastAPI app with Mangum. The same app still runs locally with uvicorn
-- [ ] **1.5 Container for Lambda.** A second Dockerfile (or a build target) based on the AWS Lambda Python base image
-- [ ] **1.6 Ingestion worker.** A small entry point (`python -m ingest.worker <s3-key> <job-id>`) for a Fargate task
-- [ ] **1.7 Config.** Read `CACHE_BACKEND=local|s3`, `JOB_BACKEND=memory|dynamodb`, `UPLOAD_BUCKET`, `CACHE_BUCKET`, `JOBS_TABLE` from environment variables
-- [ ] **1.8 Tests.** Existing 145 backend tests still pass; new tests for the S3 and DynamoDB stores using stubs (no AWS calls)
+- [x] **1.1 Storage abstraction.** A `Store` interface with a local-folder version (today) and an S3 version. Used by `utils/page_cache.py` and `utils/vector_cache.py`
+- [x] **1.2 Job store.** Ingestion jobs saved to a `jobs` table (DynamoDB) instead of the in-memory dict in `api/main.py`
+- [x] **1.3 Presigned uploads.** `POST /uploads` returns a presigned S3 URL; the client uploads there, then calls `POST /ingest` with the S3 key. Removes the 10 MB API Gateway limit
+- [x] **1.4 Lambda entry point.** `api/lambda_handler.py` wraps the FastAPI app with Mangum. The same app still runs locally with uvicorn
+- [x] **1.5 Container for Lambda.** (written; not built locally: Docker is not installed) A second Dockerfile (or a build target) based on the AWS Lambda Python base image
+- [x] **1.6 Ingestion worker.** A small entry point (`python -m ingest.worker <s3-key> <job-id>`) for a Fargate task
+- [x] **1.7 Config.** Read `CACHE_BACKEND=local|s3`, `JOB_BACKEND=memory|dynamodb`, `UPLOAD_BUCKET`, `CACHE_BUCKET`, `JOBS_TABLE` from environment variables
+- [x] **1.8 Tests.** Existing 145 backend tests still pass; new tests for the S3 and DynamoDB stores using stubs (no AWS calls)
 - [ ] **1.9 Commit and review** (local only, push on your go-ahead)
 
 ---

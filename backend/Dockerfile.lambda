@@ -1,0 +1,18 @@
+# Dockerfile.lambda - the API as an AWS Lambda container image (see docs/AWS.md, step 1.5).
+# Not used locally; the local Dockerfile (Railway) is unchanged.
+#
+# Tesseract (the OCR fallback) is not installed here: Lambda images are kept small.
+# Pages that need OCR are then marked as failed and can be re-read later from a local run.
+
+# --- Base: the official AWS Lambda image for Python ----------------------------------
+FROM public.ecr.aws/lambda/python:3.14
+
+# --- Python packages (cached while requirements.txt is unchanged) ----------------------
+COPY requirements.txt ${LAMBDA_TASK_ROOT}/
+RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
+
+# --- The backend code (no tests, data or secrets: see .dockerignore) --------------------
+COPY . ${LAMBDA_TASK_ROOT}
+
+# --- Handler: api/lambda_handler.py -> handler --------------------------------------------
+CMD ["api.lambda_handler.handler"]

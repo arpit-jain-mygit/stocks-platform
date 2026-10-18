@@ -48,11 +48,16 @@ from pydantic import BaseModel, Field
 from api.security import require_api_key
 
 from ingest import store
-from ingest.formats import check_format
-from ingest.pipeline import check_existing, describe, ingest_pdf
+from ingest.formats import check_format, get_reader
+from ingest.pipeline import check_existing, describe
 from query.answer import answer
 from query.search import build_filters
 from utils.companies import company_dict, find_company, load_companies
+from utils.jobs import job_store
+from ingest.worker import run_job
+from utils.uploads import create_upload, read_upload
+from utils.worker_dispatch import dispatch_worker
+from utils.config import ingest_mode
 from utils.doc_types import load_doc_types
 
 # --- Settings ----------------------------------------------------------------
@@ -72,10 +77,10 @@ if os.getenv("ENABLE_BACKUP_APIS", "").lower() == "true":
     from api.backup_apis import router as backup_router
     app.include_router(backup_router)
 
-# Ingestion jobs, kept in memory: job_id -> details.
-# Note: they disappear when the server restarts. That's OK - the lasting
-# record of every PDF lives in Qdrant (GET /documents).
-jobs: dict[str, dict] = {}
+# Ingestion jobs: job_id -> details. Kept in memory locally (JOB_BACKEND=memory) or in
+# DynamoDB on AWS (JOB_BACKEND=dynamodb). See utils/jobs.py. The lasting record of every
+# PDF lives in the database (GET /documents).
+jobs = job_store()
 
 
 # --- Request / response shapes ------------------------------------------------------
@@ -107,18 +112,6 @@ class AskResponse(BaseModel):
 
 
 # --- Background work ---------------------------------------------------------------------
-def run_ingestion(job_id: str, pdf_bytes: bytes, file_name: str, company: str, period: str,
-                  doc_type: str, force: bool) -> None:
-    """Runs the pipeline for one job and records the outcome. Called in the background."""
-    jobs[job_id]["status"] = "running"
-    try:
-        result = ingest_pdf(pdf_bytes, file_name, company, period, doc_type=doc_type, force=force)
-        jobs[job_id].update(status=result["status"], result=result)
-    except Exception as error:                      # any failure is reported on the job
-        jobs[job_id].update(status="failed", error=str(error))
-    jobs[job_id]["finished_at"] = datetime.now(timezone.utc).isoformat()
-
-
 # --- Endpoints ------------------------------------------------------------------------------
 @app.get("/health")
 def health() -> dict:
@@ -126,10 +119,25 @@ def health() -> dict:
     return {"status": "ok"}
 
 
+@app.post("/uploads", dependencies=[Depends(require_api_key)])
+def create_upload_link(file_name: str = Form(..., examples=["report.pdf"])) -> dict:
+    """AWS only: a presigned link to upload a file straight to S3, then ingest it with upload_key."""
+    try:
+        get_reader(file_name)              # refuse unsupported file types before creating a link
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+    try:
+        return create_upload(file_name)
+    except RuntimeError as error:
+        raise HTTPException(status_code=501, detail=str(error))
+
+
 @app.post("/ingest", dependencies=[Depends(require_api_key)])
 async def ingest(
     background: BackgroundTasks,
-    file: UploadFile = File(..., description="The filing: .pdf, .csv, .xlsx, .pptx, .docx, .txt or .md"),
+    file: UploadFile | None = File(None, description="The filing: .pdf, .csv, .xlsx, .pptx, .docx, .txt or .md (locally)"),
+    upload_key: str = Form("", description="AWS: the upload_key from POST /uploads, instead of a file"),
+    file_name: str = Form("", description="With upload_key: the original file name (for its type)"),
     company: str = Form(..., examples=["VIDEOIND"], description="ID, BSE code, name or alias from /companies"),
     period: str = Form(..., examples=["Q3 FY25"], description="e.g. 'Q3 FY25' or 'FY25'"),
     doc_type: str = Form("quarterly_results", description="code from /doc-types"),
@@ -140,13 +148,23 @@ async def ingest(
       - status "skipped" if this exact PDF is already stored (nothing to do), or
       - status "queued" with a job_id - follow it at GET /jobs/{job_id}.
     """
-    pdf_bytes = await file.read()     # any supported file type (see ingest/formats/)
+    if upload_key:                    # AWS: the file is already in S3
+        try:
+            pdf_bytes = read_upload(upload_key)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error))
+        file_name = file_name or upload_key.rsplit("/", 1)[-1]
+    elif file is not None:
+        pdf_bytes = await file.read()     # any supported file type (see ingest/formats/)
+        file_name = file.filename
+    else:
+        raise HTTPException(status_code=400, detail="Send a file, or upload_key from POST /uploads")
 
     # Basic checks before any work.
     if len(pdf_bytes) > MAX_UPLOAD_MB * 1024 * 1024:
         raise HTTPException(status_code=413, detail=f"File is larger than {MAX_UPLOAD_MB} MB")
     try:
-        check_format(file.filename, pdf_bytes)
+        check_format(file_name, pdf_bytes)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
     try:
@@ -160,23 +178,34 @@ async def ingest(
     if skipped and not force:
         return skipped
 
-    # Otherwise start a background job.
+    # Otherwise start a job: in the background locally, or in an ECS worker task on AWS.
     job_id = uuid.uuid4().hex
-    jobs[job_id] = {
-        "job_id": job_id, "status": "queued", "doc_id": doc_id, "file_name": file.filename,
+    jobs.create(job_id, {
+        "job_id": job_id, "status": "queued", "doc_id": doc_id, "file_name": file_name,
         "company_id": meta["company_id"], "period": meta["period"], "doc_type": meta["doc_type"],
         "created_at": datetime.now(timezone.utc).isoformat(),
-    }
-    background.add_task(run_ingestion, job_id, pdf_bytes, file.filename, company, period, meta["doc_type"], force)
+    })
+    if ingest_mode() == "worker":
+        if not upload_key:
+            jobs.update(job_id, status="failed", error="On AWS, upload the file with POST /uploads first")
+            raise HTTPException(status_code=400, detail="On AWS, upload the file with POST /uploads first (upload_key)")
+        try:
+            dispatch_worker(job_id, upload_key, file_name, company, period, meta["doc_type"], force)
+        except (RuntimeError, KeyError) as error:
+            jobs.update(job_id, status="failed", error=str(error))
+            raise HTTPException(status_code=503, detail=f"Could not start the ingestion worker: {error}")
+    else:
+        background.add_task(run_job, job_id, pdf_bytes, file_name, company, period, meta["doc_type"], force)
     return {"status": "queued", "job_id": job_id, "doc_id": doc_id}
 
 
 @app.get("/jobs/{job_id}", dependencies=[Depends(require_api_key)])
 def get_job(job_id: str) -> dict:
     """Progress of one ingestion: queued -> running -> complete / skipped / failed."""
-    if job_id not in jobs:
-        raise HTTPException(status_code=404, detail="Unknown job_id (jobs are forgotten when the server restarts)")
-    return jobs[job_id]
+    job = jobs.get(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Unknown job_id (memory jobs are forgotten when the server restarts)")
+    return job
 
 
 @app.get("/companies", dependencies=[Depends(require_api_key)])

@@ -1,39 +1,35 @@
 """
-vector_cache.py - Saves embedding vectors to disk so the same text is never embedded twice.
+vector_cache.py - Saves embedding vectors so the same text is never embedded twice.
 
-Layout on disk:   <CACHE_DIR>/vectors/<model>-<dim>/<key>.json
-- key = SHA-256 of (task type + text). Same text -> same file, whatever PDF it came from.
+Keys (in the storage chosen by utils/storage.py):   vectors/<model>-<dim>/<key>.json
+- key = SHA-256 of (task type + text). Same text -> same key, whatever PDF it came from.
 - The folder name includes the model and vector size: switching either one
   automatically uses a fresh folder, so old vectors are never mixed with new ones.
 """
 
 # --- Imports -----------------------------------------------------------------
-# hashlib:    builds the key (file name) from the text.
-# json:       vectors are stored as plain JSON lists of numbers.
-# CACHE_DIR:  same root folder as the page cache (data/cache by default).
+# hashlib: builds the key from the text.
+# json:    vectors are stored as plain JSON lists of numbers.
+# cache_storage: the local folder or S3 bucket (utils/storage.py).
 import hashlib
 import json
 
-from utils.page_cache import CACHE_DIR
+from utils.storage import cache_storage
 
 
-# --- Where one vector lives on disk ------------------------------------------------
-def vector_path(model: str, dim: int, task_type: str, text: str):
+# --- Which file holds one vector -----------------------------------------------------
+def vector_key(model: str, dim: int, task_type: str, text: str) -> str:
     key = hashlib.sha256(f"{task_type}|{text}".encode()).hexdigest()
-    return CACHE_DIR / "vectors" / f"{model}-{dim}" / f"{key}.json"
+    return f"vectors/{model}-{dim}/{key}.json"
 
 
 # --- Read / write ----------------------------------------------------------------------
 def load(model: str, dim: int, task_type: str, text: str) -> list[float] | None:
     """Returns the cached vector for this text, or None if it was never saved."""
-    path = vector_path(model, dim, task_type, text)
-    return json.loads(path.read_text()) if path.exists() else None
+    stored = cache_storage().get_text(vector_key(model, dim, task_type, text))
+    return json.loads(stored) if stored is not None else None
 
 
 def save(model: str, dim: int, task_type: str, text: str, vector: list[float]) -> None:
-    """Saves one vector. Temp file + rename, so a crash never leaves half a file."""
-    path = vector_path(model, dim, task_type, text)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(vector))
-    tmp.replace(path)
+    """Saves one vector."""
+    cache_storage().put_text(vector_key(model, dim, task_type, text), json.dumps(vector))
