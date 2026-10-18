@@ -16,7 +16,10 @@
 
 ## To do
 
-- [ ] **UI support**
+- [ ] **UI support** (Angular single page app in `ui/`, see `ui/README.md`)
+  - [x] Angular 22 app, router, Hello World home page, unit tests
+  - [ ] Ask page: question + company -> answer with cited sources (calls the backend)
+  - [ ] Companies and documents pages
 - [ ] **Create the project in Git** (GitHub repo, private)
   - [ ] `.gitignore` before the first commit: `.env`, `.venv/`, caches, `data/` PDFs, `eval/results/`, backups (`*.json.gz`), `__pycache__/`
   - [ ] Check no secrets are in any file to be committed (keys only in `.env`; `.env.example` has placeholders)

@@ -1,0 +1,24 @@
+/* styles.css - Global styles for every page. */
+
+/* Colour tokens: light by default, dark when the computer is in dark mode. */
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #5f6368;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121212;
+    --text: #e8e8e8;
+    --muted: #a0a4a8;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
