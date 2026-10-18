@@ -8,10 +8,34 @@ Related: [README.md](README.md) · [features.md](features.md) · [UX.md](UX.md)
 
 ---
 
+## Progress log
+
+| Date | Step | Result / note |
+|---|---|---|
+| 2026-10-18 | Chose Terraform, `ap-south-1`, API + frontend first, default CloudFront / API Gateway addresses | Decisions recorded in section 0 |
+| 2026-10-18 | Confirmed `ap-south-1` (Mumbai) is enabled by default | No opt-in needed |
+| 2026-10-18 | Checked CLI: AWS CLI 2.36 installed; Terraform not installed | `brew install terraform` still to do (2.1) |
+| 2026-10-18 | CLI showed signed-in user `matchanalyzer-cli` (another project) | Not used for this project |
+| 2026-10-18 | Started creating a classic IAM user in the IAM console | Stopped in favour of IAM Identity Center, which gives temporary credentials. If an IAM user `stocks-insights-admin` was created there, delete it (IAM → Users) |
+| 2026-10-18 | Enabled IAM Identity Center as an **account instance** (not an organization), single region `ap-south-1` | Organization would have switched the account to pay-as-you-go and expired free-tier credits. Account instance can't be upgraded to an organization later |
+| 2026-10-18 | Created Identity Center user `stocks-insights-admin` | Invitation email sent to the owner's address |
+| 2026-10-18 | Set up MFA (authenticator app on phone) for `stocks-insights-admin` | MFA is required by the organisation's policy |
+| 2026-10-18 | Access portal URL noted: `https://d-9f675bd66a.awsapps.com/start` | Not a secret; used by `aws configure sso` |
+
+### Still to do
+
+- [ ] Create permission set `StocksInsightsDeploy` (for now `PowerUserAccess` + `IAMFullAccess`; narrow in Phase 5)
+- [ ] Assign `stocks-insights-admin` to this AWS account with that permission set
+- [ ] Install Terraform: `brew install terraform`
+- [ ] Run `aws configure sso` and name the profile `stocks-insights`
+- [ ] Check with `aws sts get-caller-identity --profile stocks-insights`
+
+---
+
 ## 0. Decisions (answer before Phase 2)
 
 - [x] **IaC tool:** Terraform (chosen)
-- [ ] **AWS login:** a new IAM Identity Center (SSO) user for this project, created by you in the console (steps below). Not the `matchanalyzer-cli` user, which belongs to another project
+- [x] **AWS login:** a new IAM Identity Center (SSO) user (account instance done; permission set and CLI login pending - see progress log) for this project, created by you in the console (steps below). Not the `matchanalyzer-cli` user, which belongs to another project
 - [x] **Scope of first release:** API + frontend only, with ingestion still on Railway
 - [x] **Region:** `ap-south-1` (Mumbai)
 - [x] **Domain:** default CloudFront and API Gateway addresses for now (no domain cost). A custom domain can be added in section 4.2 later: roughly $10–15 a year for a standard domain (more for `.ai`), plus about $0.50 a month for a Route 53 hosted zone
