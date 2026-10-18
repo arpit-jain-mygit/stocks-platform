@@ -86,7 +86,7 @@ Branch: `aws-serverless`.
 - [x] **2.4 Remote state:** S3 bucket for Terraform state (versioning and encryption on) and a DynamoDB table for locks
 - [x] **2.5 `infra/` folder:** `providers.tf`, `variables.tf`, `outputs.tf`, one module per component
 - [x] **2.6 Secrets:** SSM Parameter Store (SecureString) for `APP_API_KEY`, `ADMIN_API_KEY`, `GEMINI_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`, `DATABASE_URL`. Values are entered once, not written into Terraform files
-- [ ] **2.7 Storage:** S3 buckets for the frontend, uploads and caches (private, encrypted, lifecycle rules on uploads)
+- [ ] **2.7 Storage:** (written and planned: 11 resources to add, awaiting apply) S3 buckets for the frontend, uploads and caches (private, encrypted, lifecycle rules on uploads)
 - [ ] **2.8 Metadata table:** DynamoDB `jobs` table (on-demand billing)
 - [ ] **2.9 Backend:** ECR repository, Lambda function (container image, 2–3 GB memory, 5 min timeout), API Gateway HTTP API, IAM role with least privilege
 - [ ] **2.10 Frontend:** CloudFront distribution with origin access control to the frontend bucket

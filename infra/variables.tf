@@ -23,3 +23,9 @@ variable "account_id" {
   type        = string
   default     = "552808407801"
 }
+
+variable "upload_allowed_origins" {
+  description = "Sites allowed to upload PDFs with presigned links. Tighten to the CloudFront domain in step 2.10."
+  type        = list(string)
+  default     = ["*"]
+}
