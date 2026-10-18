@@ -10,18 +10,33 @@ import { Observable } from 'rxjs';
 
 // --- Shapes of the backend's JSON -------------------------------------------------------
 
+/** One way to identify a company: a ticker on an exchange, an ISIN, a CIN ... */
+export interface Identifier {
+  type: string;           // ticker / isin / lei / cik / cin / figi / registry
+  exchange: string;       // tickers only, e.g. "NSE", "NASDAQ"; "" otherwise
+  value: string;          // e.g. "OFSS", "US5949181045"
+}
+
 /** One company (GET /companies). */
 export interface Company {
   company_id: string;     // e.g. "OFSS"
   name: string;           // e.g. "Oracle Financial Services Software Ltd"
-  nse_symbol: string;
-  bse_code: string;
-  cin: string;
-  isin: string;
+  country: string;        // ISO code, e.g. "IN", "US"; "" if not recorded
+  identifiers: Identifier[];   // tickers first, then ISIN, CIN ...
   aliases: string[];
   sector: string;
   fy_end_month: number;   // 3 = financial year ends in March
   status: string;         // active / suspended / delisted / insolvency
+  // Older fields, filled from identifiers by the backend (not used by the UI):
+  nse_symbol: string;
+  bse_code: string;
+  cin: string;
+  isin: string;
+}
+
+/** "NSE OFSS" for a ticker, "ISIN INE881D01027" otherwise - how identifiers are shown. */
+export function identifierLabel(id: Identifier): { label: string; value: string } {
+  return { label: id.type === 'ticker' ? id.exchange : id.type.toUpperCase(), value: id.value };
 }
 
 /** One ingested PDF (a "filing"). */

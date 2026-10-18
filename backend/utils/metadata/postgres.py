@@ -1,5 +1,5 @@
 """
-postgres.py - Metadata in Postgres (Supabase): companies, aliases, doc types and filings.
+postgres.py - Metadata in Postgres (Supabase): companies, aliases, identifiers, doc types and filings.
 
 Tables and starting data come from db/migrations (python db/migrate.py).
 Add companies / doc types with db/samples/add_company.sql.
@@ -14,18 +14,24 @@ import time
 
 import psycopg
 
-from utils.metadata.base import Company, MetadataStore
+from utils.metadata.base import Company, Identifier, MetadataStore
 
 CACHE_SECONDS = 60
 
-COMPANIES_SQL = """
-    SELECT c.code, c.name, COALESCE(c.nse_symbol, ''), COALESCE(c.bse_code, ''), COALESCE(c.cin, ''),
-           COALESCE(c.isin, ''),
-           COALESCE(array_agg(a.alias::text ORDER BY a.alias) FILTER (WHERE a.alias IS NOT NULL), '{}'),
-           COALESCE(c.sector, ''), c.fy_end_month, c.status
+# One row per company, with its aliases and identifiers gathered into lists.
+# Identifiers come back tickers first, then ISIN, CIN, ... (display order).
+IDENTIFIERS_JSON = """
+    COALESCE((SELECT json_agg(json_build_object('type', i.type, 'exchange', COALESCE(i.exchange, ''),
+                                                'value', i.value)
+                              ORDER BY i.type <> 'ticker', i.type, i.exchange, i.value)
+              FROM company_identifiers i WHERE i.company_id = c.id), '[]'::json)"""
+ALIASES_ARRAY = """
+    COALESCE((SELECT array_agg(a.alias::text ORDER BY a.alias)
+              FROM company_aliases a WHERE a.company_id = c.id), '{}')"""
+COMPANIES_SQL = f"""
+    SELECT c.code, c.name, COALESCE(c.country, ''), COALESCE(c.sector, ''), c.fy_end_month, c.status,
+           {ALIASES_ARRAY}, {IDENTIFIERS_JSON}
     FROM companies c
-    LEFT JOIN company_aliases a ON a.company_id = c.id
-    GROUP BY c.id
     ORDER BY c.code
 """
 
@@ -48,7 +54,11 @@ FILING_KEYS = ["doc_id", "file_name", "company_id", "company", "doc_type", "fisc
 
 
 # Columns copied as-is by backups (ids are never copied; links go by company code).
-COMPANY_COLUMNS = ["code", "name", "cin", "isin", "nse_symbol", "bse_code", "sector", "fy_end_month", "status"]
+# Identifiers and aliases travel as lists on each company.
+COMPANY_COLUMNS = ["code", "name", "country", "sector", "fy_end_month", "status"]
+# Backups made before migration 004 carry these instead of "identifiers".
+LEGACY_IDENTIFIER_FIELDS = {"nse_symbol": ("ticker", "NSE"), "bse_code": ("ticker", "BSE"),
+                            "isin": ("isin", None), "cin": ("cin", None)}
 FILING_EXPORT_COLUMNS = ["doc_id", "doc_type", "fiscal_year", "quarter", "period_end", "period_label", "file_name",
                          "storage_url", "filed_on", "pages", "ocr_pages", "chunks", "status", "error",
                          "superseded_by", "created_at", "updated_at"]
@@ -62,6 +72,15 @@ def filing_dict(row) -> dict:
     record["updated_at"] = record["updated_at"].isoformat()
     record["ocr_pages"] = list(record["ocr_pages"] or [])
     return record
+
+
+def backup_identifiers(company: dict) -> list[tuple[str, str | None, str]]:
+    """(type, exchange, value) rows from a backed-up company: its "identifiers" list, or -
+    for backups made before migration 004 - its nse_symbol / bse_code / isin / cin fields."""
+    if "identifiers" in company:
+        return [(i["type"], i["exchange"] or None, i["value"]) for i in company["identifiers"]]
+    return [(type_, exchange, company[field]) for field, (type_, exchange) in LEGACY_IDENTIFIER_FIELDS.items()
+            if company.get(field)]
 
 
 class PostgresMetadataStore(MetadataStore):
@@ -94,9 +113,10 @@ class PostgresMetadataStore(MetadataStore):
         def load():
             with self.connect() as conn:
                 rows = conn.execute(COMPANIES_SQL).fetchall()
-            return [Company(company_id=code, name=name, nse_symbol=nse, bse_code=bse, cin=cin, isin=isin,
-                            aliases=tuple(aliases), sector=sector, fy_end_month=fy_end, status=status)
-                    for code, name, nse, bse, cin, isin, aliases, sector, fy_end, status in rows]
+            return [Company(company_id=code, name=name, country=country, sector=sector, fy_end_month=fy_end,
+                            status=status, aliases=tuple(aliases),
+                            identifiers=tuple(Identifier(i["type"], i["value"], i["exchange"]) for i in identifiers))
+                    for code, name, country, sector, fy_end, status, aliases, identifiers in rows]
         return self._cached("companies", load)
 
     def doc_types(self) -> dict:
@@ -195,10 +215,8 @@ class PostgresMetadataStore(MetadataStore):
                 "doc_types": rows(conn, "SELECT code, name, is_default FROM doc_types ORDER BY code"),
                 "companies": rows(conn, f"""
                     SELECT {", ".join("c." + col for col in COMPANY_COLUMNS)},
-                           COALESCE(array_agg(a.alias::text ORDER BY a.alias)
-                                    FILTER (WHERE a.alias IS NOT NULL), '{{}}') AS aliases
-                    FROM companies c LEFT JOIN company_aliases a ON a.company_id = c.id
-                    GROUP BY c.id ORDER BY c.code"""),
+                           {ALIASES_ARRAY} AS aliases, {IDENTIFIERS_JSON} AS identifiers
+                    FROM companies c ORDER BY c.code"""),
                 "filings": rows(conn, f"""
                     SELECT c.code AS company_code, {", ".join("f." + col for col in FILING_EXPORT_COLUMNS)}
                     FROM filings f JOIN companies c ON c.id = f.company_id ORDER BY f.created_at"""),
@@ -215,6 +233,7 @@ class PostgresMetadataStore(MetadataStore):
 
             if mode == "replace":                                   # children first (foreign keys)
                 conn.execute("DELETE FROM filings")
+                conn.execute("DELETE FROM company_identifiers")
                 conn.execute("DELETE FROM company_aliases")
                 conn.execute("DELETE FROM companies")
                 conn.execute("DELETE FROM doc_types")
@@ -226,8 +245,9 @@ class PostgresMetadataStore(MetadataStore):
                 conn.execute("""INSERT INTO doc_types (code, name, is_default) VALUES (%(code)s, %(name)s, %(is_default)s)
                                 ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, is_default = EXCLUDED.is_default""", t)
 
-            # Companies (by code) + their aliases.
+            # Companies (by code) + their aliases and identifiers.
             for c in data["companies"]:
+                c = {col: c.get(col) for col in COMPANY_COLUMNS} | c        # older backups: no "country"
                 company_id = conn.execute(
                     f"""INSERT INTO companies ({", ".join(COMPANY_COLUMNS)})
                         VALUES ({", ".join("%(" + col + ")s" for col in COMPANY_COLUMNS)})
@@ -237,6 +257,10 @@ class PostgresMetadataStore(MetadataStore):
                 for alias in c["aliases"]:
                     conn.execute("INSERT INTO company_aliases (company_id, alias) VALUES (%s, %s) "
                                  "ON CONFLICT (alias) DO NOTHING", (company_id, alias))
+                for type_, exchange, value in backup_identifiers(c):
+                    conn.execute("INSERT INTO company_identifiers (company_id, type, exchange, value) "
+                                 "VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
+                                 (company_id, type_, exchange, value))
 
             # Filings: insert without superseded_by first, then add the links,
             # so a link never points at a row that isn't loaded yet.
@@ -253,7 +277,7 @@ class PostgresMetadataStore(MetadataStore):
                     conn.execute("UPDATE filings SET superseded_by = %s WHERE doc_id = %s", (f["superseded_by"], f["doc_id"]))
 
             counts = {name: conn.execute(f"SELECT count(*) FROM {name}").fetchone()[0]
-                      for name in ("doc_types", "companies", "company_aliases", "filings")}
+                      for name in ("doc_types", "companies", "company_aliases", "company_identifiers", "filings")}
         self.clear_cache()
         return counts
 

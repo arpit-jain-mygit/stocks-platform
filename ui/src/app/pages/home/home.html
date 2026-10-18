@@ -29,10 +29,11 @@
                       [attr.aria-controls]="isOpen ? (wide() ? 'company-panel' : 'details-' + company.company_id) : null">
                 <span class="titles">
                   <span class="name">{{ company.name }}</span>
+                  <!-- Tickers first ("NSE OFSS", "NASDAQ MSFT"), then ISIN; other ids are in the details. -->
                   <span class="codes">
-                    @if (company.nse_symbol) { <span><span class="label">NSE</span> {{ company.nse_symbol }}</span> }
-                    @if (company.bse_code) { <span><span class="label">BSE</span> {{ company.bse_code }}</span> }
-                    @if (company.isin) { <span><span class="label">ISIN</span> {{ company.isin }}</span> }
+                    @for (id of cardIdentifiers(company); track $index) {
+                      <span><span class="label">{{ label(id).label }}</span> {{ id.value }}</span>
+                    }
                   </span>
                 </span>
                 <span class="chevron" aria-hidden="true"></span>

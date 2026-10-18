@@ -12,8 +12,9 @@
     <dl class="facts">
       <div><dt>Status</dt><dd><span class="badge" [attr.data-status]="c.status">{{ c.status }}</span></dd></div>
       <div><dt>Code</dt><dd>{{ c.company_id }}</dd></div>
-      @if (c.nse_symbol) { <div><dt>NSE symbol</dt><dd>{{ c.nse_symbol }}</dd></div> }
-      @if (c.bse_code) { <div><dt>BSE code</dt><dd>{{ c.bse_code }}</dd></div> }
+      <!-- Listings: one entry per ticker, e.g. "NSE" -> OFSS, "NASDAQ" -> MSFT (any exchange). -->
+      @for (id of tickers(c); track $index) { <div><dt>{{ id.exchange }} ticker</dt><dd>{{ id.value }}</dd></div> }
+      @if (c.country) { <div><dt>Country</dt><dd>{{ c.country }}</dd></div> }
       <div><dt>Financial year ends</dt><dd>{{ monthName(c.fy_end_month) }}</dd></div>
     </dl>
   </section>

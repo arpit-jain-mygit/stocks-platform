@@ -123,7 +123,7 @@ python db/migrate.py --status
 
 ### 1.5 Companies, periods and document types
 
-Every stored chunk uses the company's canonical **code** (`company_id`, e.g. `VIDEOIND`), so name spellings never split one company in two. Lookups accept the code, NSE symbol, BSE code, ISIN, CIN, name or any alias.
+Every stored chunk uses the company's canonical **code** (`company_id`, e.g. `VIDEOIND`), so name spellings never split one company in two. Lookups accept the code, name, any alias, any identifier (ISIN, CIN, LEI, CIK…), a ticker with its exchange (`NSE:OFSS`, `NASDAQ:MSFT`) or a bare ticker (`OFSS`, `511389`) when only one company has it - a bare ticker shared by companies on different exchanges returns **400** listing the `EXCHANGE:TICKER` choices.
 
 **Add a company or doc type:** `db/samples/add_company.sql` in the Supabase SQL editor (Block 1 company + aliases, Block 2 doc type). Dry run by default; it refuses identifiers that already belong to another company. The API sees changes within 60 seconds. List them with `GET /companies` and `GET /doc-types`.
 
@@ -190,7 +190,7 @@ uvicorn api.main:app --host 0.0.0.0 --port 8080
 
 All except `/health` need header `X-API-Key: <APP_API_KEY>`.
 
-`company` accepts the company ID, BSE code, name or any alias (`VIDEOIND`, `511389`, `Videocon`). `period` accepts `Q3 FY25`, `FY25` etc. `doc_type` is a code from `/doc-types`. Unknown values return **400** with the allowed values.
+`company` accepts the company ID, name, alias, ISIN / CIN, `EXCHANGE:TICKER` or a unique bare ticker (`VIDEOIND`, `BSE:511389`, `511389`, `Videocon`). `period` accepts `Q3 FY25`, `FY25` etc. `doc_type` is a code from `/doc-types`. Unknown values return **400** with the allowed values.
 
 ### 3.3 Way 1 – Browser (Swagger UI)
 

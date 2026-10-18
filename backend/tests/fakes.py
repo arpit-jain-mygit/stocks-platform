@@ -22,7 +22,7 @@ from dataclasses import asdict
 from itertools import count
 
 from utils.llm.base import DOCUMENT, LLMClient
-from utils.metadata.base import Company, MetadataStore
+from utils.metadata.base import Company, Identifier, MetadataStore
 from utils.vectorstore.base import SearchResult, VectorRecord, VectorStore
 
 # --- What the fake vision model "reads" from every image page --------------------
@@ -134,10 +134,14 @@ class FakeVectorStore(VectorStore):
 # --- Fake metadata store --------------------------------------------------------------------
 # Same starting data as db/migrations/003_seed_reference_data.sql.
 SEED_COMPANIES = [
-    Company(company_id="VIDEOIND", name="Videocon Industries Ltd", nse_symbol="VIDEOIND", bse_code="511389",
-            cin="L99999MH1986PLC103624", aliases=("Videocon", "Videocon Industries Limited")),
-    Company(company_id="OFSS", name="Oracle Financial Services Software Ltd", nse_symbol="OFSS",
-            bse_code="532466", isin="INE881D01027", aliases=("Oracle Financial Services",)),
+    Company(company_id="VIDEOIND", name="Videocon Industries Ltd", country="IN",
+            aliases=("Videocon", "Videocon Industries Limited"),
+            identifiers=(Identifier("ticker", "VIDEOIND", "NSE"), Identifier("ticker", "511389", "BSE"),
+                         Identifier("cin", "L99999MH1986PLC103624"))),
+    Company(company_id="OFSS", name="Oracle Financial Services Software Ltd", country="IN",
+            aliases=("Oracle Financial Services",),
+            identifiers=(Identifier("ticker", "OFSS", "NSE"), Identifier("ticker", "532466", "BSE"),
+                         Identifier("isin", "INE881D01027"))),
 ]
 SEED_DOC_TYPES = [
     {"code": "quarterly_results", "name": "Quarterly financial results"},
@@ -205,7 +209,8 @@ class FakeMetadataStore(MetadataStore):
         return {
             "migrations": ["001_init", "002_filings", "003_seed_reference_data"],
             "doc_types": copy.deepcopy(self.types),
-            "companies": [asdict(c) | {"aliases": list(c.aliases)} for c in self.companies],
+            "companies": [asdict(c) | {"aliases": list(c.aliases), "identifiers": [asdict(i) for i in c.identifiers]}
+                          for c in self.companies],
             "filings": self.list_filings(),
         }
 
@@ -214,7 +219,8 @@ class FakeMetadataStore(MetadataStore):
             self.companies, self.types, self.filings = [], [], {}
         known = {c.company_id: c for c in self.companies}
         for c in data["companies"]:
-            known[c["company_id"]] = Company(**{**c, "aliases": tuple(c["aliases"])})
+            known[c["company_id"]] = Company(**{**c, "aliases": tuple(c["aliases"]),
+                                                "identifiers": tuple(Identifier(**i) for i in c["identifiers"])})
         self.companies = list(known.values())
         types = {t["code"]: t for t in self.types} | {t["code"]: t for t in data["doc_types"]}
         self.types = list(types.values())

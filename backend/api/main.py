@@ -40,7 +40,6 @@ background. Poll /jobs/{job_id} to see when it is done.
 # companies:      the company registry (utils/companies.py).
 import os
 import uuid
-from dataclasses import asdict
 from datetime import datetime, timezone
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, UploadFile
@@ -52,7 +51,7 @@ from ingest import store
 from ingest.pipeline import check_existing, describe, ingest_pdf
 from query.answer import answer
 from query.search import build_filters
-from utils.companies import find_company, load_companies
+from utils.companies import company_dict, find_company, load_companies
 from utils.doc_types import load_doc_types
 
 # --- Settings ----------------------------------------------------------------
@@ -177,7 +176,7 @@ def get_job(job_id: str) -> dict:
 @app.get("/companies", dependencies=[Depends(require_api_key)])
 def companies(ingested: bool = False) -> list[dict]:
     """
-    Every company (ID, name, exchange codes, aliases).
+    Every company (ID, name, country, identifiers - tickers per exchange, ISIN ... - and aliases).
     ?ingested=true -> only companies with at least one completely ingested filing
     (what the UI lists - a company with no data can't answer questions).
     """
@@ -185,20 +184,24 @@ def companies(ingested: bool = False) -> list[dict]:
     if ingested:
         with_data = {f["company_id"] for f in store.list_documents() if f.get("status") == "complete"}
         found = [c for c in found if c.company_id in with_data]
-    return [asdict(c) for c in found]
+    return [company_dict(c) for c in found]
 
 
 @app.get("/companies/{company}", dependencies=[Depends(require_api_key)])
 def company_detail(company: str) -> dict:
     """
-    One company: every stored detail (codes, sector, status, aliases ...) plus
-    "filings" = its ingested PDFs, newest first. company = ID, code, name or alias.
+    One company: every stored detail (country, identifiers, sector, status, aliases ...)
+    plus "filings" = its ingested PDFs, newest first. company = ID, name, alias, ISIN,
+    "EXCHANGE:TICKER" or a bare ticker that only one company has.
     """
-    found = find_company(company)
+    try:
+        found = find_company(company)
+    except ValueError as error:                       # a bare ticker used by several companies
+        raise HTTPException(status_code=400, detail=str(error))
     if found is None:
         raise HTTPException(status_code=404, detail=f"No company {company!r}")
     filings = [f for f in store.list_documents() if f["company_id"] == found.company_id]
-    return {**asdict(found), "filings": filings}
+    return {**company_dict(found), "filings": filings}
 
 
 @app.get("/doc-types", dependencies=[Depends(require_api_key)])

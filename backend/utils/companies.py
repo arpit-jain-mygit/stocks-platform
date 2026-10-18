@@ -9,7 +9,8 @@ store uses company_id, so "Videocon Industries Ltd" and "Videocon Industries
 Limited" can never become two different companies.
 
     find_company("Videocon")      -> Company(company_id="VIDEOIND", ...)
-    find_company("511389")        -> same company (BSE code)
+    find_company("511389")        -> same company (BSE ticker; also "BSE:511389")
+    find_company("NASDAQ:MSFT")   -> Microsoft (a ticker with its exchange is always unique)
     require_company("XYZ")        -> ValueError listing the known companies
 """
 
@@ -18,7 +19,7 @@ Limited" can never become two different companies.
 # get_metadata_store: the configured metadata store (JSON files or Postgres).
 from utils.metadata import Company, get_metadata_store
 
-__all__ = ["Company", "load_companies", "find_company", "require_company"]
+__all__ = ["Company", "load_companies", "find_company", "require_company", "company_dict"]
 
 
 # --- Loading -------------------------------------------------------------------------
@@ -38,16 +39,42 @@ def load_companies() -> list[Company]:
 # --- Lookup --------------------------------------------------------------------------
 def find_company(text: str | None) -> Company | None:
     """
-    The company matching this ID, exchange code, CIN, ISIN, name or alias
-    (case-insensitive, exact match), or None.
+    The company matching this text (case-insensitive, exact match), or None:
+      1. its ID, name, alias, ISIN / CIN / LEI ..., or a ticker with its exchange ("NASDAQ:MSFT")
+      2. otherwise a bare ticker ("MSFT", "532540") - if exactly one company has it.
+    Raises ValueError if a bare ticker belongs to several companies (on different
+    exchanges): the caller must then write EXCHANGE:TICKER.
     """
     if not text:
         return None
     wanted = text.strip().lower()
-    for company in load_companies():
+    companies = load_companies()
+    for company in companies:
         if wanted in (n.lower() for n in company.names()):
             return company
-    return None
+
+    by_ticker = [c for c in companies if wanted in (t.lower() for t in c.tickers())]
+    if len(by_ticker) > 1:
+        choices = ", ".join(f"{i.label()} ({c.name})" for c in by_ticker
+                            for i in c.identifiers if i.type == "ticker" and i.value.lower() == wanted)
+        raise ValueError(f"{text!r} is a ticker of several companies: {choices}. Write it as EXCHANGE:TICKER.")
+    return by_ticker[0] if by_ticker else None
+
+
+def company_dict(company: Company) -> dict:
+    """
+    A company as JSON for the API. "identifiers" is the general list; nse_symbol,
+    bse_code, isin and cin are kept (filled from it) so older callers keep working.
+    """
+    return {
+        "company_id": company.company_id, "name": company.name, "country": company.country,
+        "sector": company.sector, "fy_end_month": company.fy_end_month, "status": company.status,
+        "aliases": list(company.aliases),
+        "identifiers": [{"type": i.type, "exchange": i.exchange, "value": i.value} for i in company.identifiers],
+        # Older fields (same data as "identifiers"):
+        "nse_symbol": company.identifier("ticker", "NSE"), "bse_code": company.identifier("ticker", "BSE"),
+        "isin": company.identifier("isin"), "cin": company.identifier("cin"),
+    }
 
 
 def require_company(text: str) -> Company:

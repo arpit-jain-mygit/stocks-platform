@@ -7,7 +7,7 @@ metadata - where companies, doc types and filing records live (Postgres).
 Files: base.py (interface + Company) - postgres.py - factory.py.
 """
 
-from utils.metadata.base import Company, MetadataStore
+from utils.metadata.base import IDENTIFIER_TYPES, Company, Identifier, MetadataStore
 from utils.metadata.factory import get_metadata_store
 
-__all__ = ["Company", "MetadataStore", "get_metadata_store"]
+__all__ = ["IDENTIFIER_TYPES", "Company", "Identifier", "MetadataStore", "get_metadata_store"]

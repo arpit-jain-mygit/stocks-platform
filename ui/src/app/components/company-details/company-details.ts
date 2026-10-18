@@ -5,7 +5,7 @@ import { Component, effect, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
-import { CompanyDetail, StocksApi } from '../../services/stocks-api';
+import { CompanyDetail, Identifier, StocksApi } from '../../services/stocks-api';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
                 'September', 'October', 'November', 'December'];
@@ -50,6 +50,11 @@ export class CompanyDetails {
         this.loading.set(false);
       },
     });
+  }
+
+  /** The company's tickers on every exchange it is listed on. */
+  protected tickers(company: CompanyDetail): Identifier[] {
+    return company.identifiers.filter((id) => id.type === 'ticker');
   }
 
   /** 3 -> "March". */

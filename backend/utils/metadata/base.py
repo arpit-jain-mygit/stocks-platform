@@ -2,7 +2,7 @@
 base.py - The common shape every metadata store must follow.
 
 Metadata = facts ABOUT companies and documents (not the documents' text):
-the company list with aliases, and the allowed document types.
+the company list with aliases and identifiers, and the allowed document types.
 utils/companies.py and utils/doc_types.py only talk to a MetadataStore, so
 where the data lives (Postgres today, something else later) is decided by
 METADATA_STORE in .env - see factory.py.
@@ -14,23 +14,55 @@ from dataclasses import dataclass, field
 
 
 # --- Records -------------------------------------------------------------------------
+# Identifier types (Postgres: company_identifiers.type). Only tickers have an exchange.
+IDENTIFIER_TYPES = ("ticker", "isin", "lei", "cik", "cin", "figi", "registry")
+
+
+@dataclass(frozen=True)
+class Identifier:
+    """
+    One way to identify a company, for any market, e.g.
+        Identifier("ticker", "TCS", "NSE")      Identifier("ticker", "MSFT", "NASDAQ")
+        Identifier("isin", "US5949181045")      Identifier("cin", "L22210MH1995PLC084781")
+    """
+    type: str                       # one of IDENTIFIER_TYPES
+    value: str
+    exchange: str = ""              # tickers only, e.g. "NSE", "BSE", "NASDAQ", "NYSE", "LSE"
+
+    def label(self) -> str:
+        """How users write it: "NASDAQ:MSFT" for a ticker, the value itself otherwise."""
+        return f"{self.exchange}:{self.value}" if self.exchange else self.value
+
+
 @dataclass(frozen=True)
 class Company:
     company_id: str                 # canonical key, e.g. "VIDEOIND" (Postgres: companies.code)
     name: str                       # display name, e.g. "Videocon Industries Ltd"
-    nse_symbol: str = ""
-    bse_code: str = ""
-    cin: str = ""
-    isin: str = ""
+    country: str = ""               # ISO code, e.g. "IN", "US" (optional)
     aliases: tuple[str, ...] = field(default_factory=tuple)
+    identifiers: tuple[Identifier, ...] = field(default_factory=tuple)
     sector: str = ""                # e.g. "IT services" (optional)
-    fy_end_month: int = 3           # month the financial year ends (3 = March, the Indian default)
+    fy_end_month: int = 3           # month the financial year ends (3 = March, 6 = June, 12 = December)
     status: str = "active"          # active / suspended / delisted / insolvency
 
+    def identifier(self, type: str, exchange: str = "") -> str:
+        """The first identifier of this type (and exchange), e.g. identifier("ticker", "NSE") -> "TCS"; "" if none."""
+        return next((i.value for i in self.identifiers
+                     if i.type == type and (not exchange or i.exchange == exchange)), "")
+
+    def tickers(self) -> list[str]:
+        """Bare ticker symbols on any exchange, e.g. ["TCS", "532540"]."""
+        return [i.value for i in self.identifiers if i.type == "ticker"]
+
     def names(self) -> list[str]:
-        """Every string that identifies this company (ID, codes, name, aliases)."""
-        return [n for n in (self.company_id, self.nse_symbol, self.bse_code, self.cin, self.isin,
-                            self.name, *self.aliases) if n]
+        """
+        Every string that identifies ONLY this company: ID, name, aliases, ISIN / CIN / LEI ...
+        and tickers written with their exchange ("NSE:TCS"). A bare ticker ("TCS") is
+        not here, because the same symbol can belong to companies on different exchanges -
+        utils/companies.find_company() handles bare tickers.
+        """
+        return [n for n in (self.company_id, self.name, *self.aliases,
+                            *(i.label() for i in self.identifiers)) if n]
 
 
 # --- The interface -----------------------------------------------------------------------

@@ -1,6 +1,6 @@
 -- add_company.sql - PL/pgSQL blocks for the Supabase SQL editor.
 --
---   Block 1: add a company (+ aliases)
+--   Block 1: add a company (+ aliases and identifiers)
 --   Block 2: add a document type
 --
 -- Postgres is the only place companies and doc types live. The API sees
@@ -11,32 +11,40 @@
 --   (ends with an error "DRY RUN ..." on purpose). false = really add.
 --
 -- Block 1: replace every ? with the company's value (in quotes, e.g. 'TCS') or
--- with NULL if it has none (e.g. a US company has no NSE / BSE code or CIN).
--- A ? left behind is a syntax error, so the block cannot run with a value
--- missing. The comments show two filled-in examples:
+-- with NULL if it has none. A ? left behind is a syntax error, so the block
+-- cannot run with a value missing. The comments show two filled-in examples:
 -- TCS (India, year ends in March) and Microsoft (US, year ends in June).
+--
+-- Identifiers (needs migration 004): one text per identifier, any market -
+--   'ticker:<EXCHANGE>:<SYMBOL>'   e.g. 'ticker:NSE:TCS', 'ticker:BSE:532540', 'ticker:NASDAQ:MSFT'
+--   '<type>:<value>'               e.g. 'isin:US5949181045', 'cin:L22210MH1995PLC084781', 'lei:...', 'cik:...'
+-- Types: ticker, isin, lei, cik, cin, figi, registry. A ticker's symbol only has
+-- to be new on its own exchange; every other identifier must be new everywhere.
 
 
 -- =====================================================================================
--- Block 1: add a company (+ aliases)
+-- Block 1: add a company (+ aliases and identifiers)
 -- =====================================================================================
 DO $$
 DECLARE
     v_code         TEXT     := ?;        -- stable key used everywhere, e.g. 'TCS' / 'MSFT' (ticker recommended)
     v_name         TEXT     := ?;        -- e.g. 'Tata Consultancy Services Ltd' / 'Microsoft Corporation'
-    v_nse_symbol   TEXT     := ?;        -- e.g. 'TCS' / NULL (not listed on NSE)
-    v_bse_code     TEXT     := ?;        -- e.g. '532540' / NULL
-    v_isin         TEXT     := ?;        -- e.g. 'INE467B01029' / 'US5949181045'
-    v_cin          TEXT     := ?;        -- e.g. 'L22210MH1995PLC084781' / NULL (Indian companies only)
+    v_country      TEXT     := ?;        -- ISO code, e.g. 'IN' / 'US'
     v_sector       TEXT     := ?;        -- e.g. 'IT services' / 'Software' / NULL
     v_fy_end_month SMALLINT := ?;        -- month the financial year ends: 3 (March, e.g. TCS) / 6 (June, e.g. Microsoft) / 12 (December)
     v_status       TEXT     := ?;        -- active / suspended / delisted / insolvency, e.g. 'active'
-    v_aliases      TEXT[]   := ?;            -- e.g. ARRAY['Tata Consultancy Services Limited', 'Tata Consultancy Services']
-                                             --      ARRAY['Microsoft', 'Microsoft Corp']
+    v_identifiers  TEXT[]   := ?;        -- e.g. ARRAY['ticker:NSE:TCS', 'ticker:BSE:532540', 'isin:INE467B01029', 'cin:L22210MH1995PLC084781']
+                                         --      ARRAY['ticker:NASDAQ:MSFT', 'isin:US5949181045']
+    v_aliases      TEXT[]   := ?;        -- e.g. ARRAY['Tata Consultancy Services Limited', 'Tata Consultancy Services']
+                                         --      ARRAY['Microsoft', 'Microsoft Corp']
     v_dry_run      BOOLEAN  := true;     -- false = really add
 
     v_company_id  BIGINT;
     v_alias       TEXT;
+    v_item        TEXT;
+    v_type        TEXT;
+    v_exchange    TEXT;
+    v_value       TEXT;
     v_taken_by    TEXT;
 BEGIN
     -- These cannot be NULL.
@@ -47,37 +55,69 @@ BEGIN
         RAISE EXCEPTION 'Set v_fy_end_month (1-12): the month the financial year ends, e.g. 3 = March, 6 = June';
     END IF;
     v_aliases := coalesce(v_aliases, ARRAY[]::TEXT[]);
+    v_identifiers := coalesce(v_identifiers, ARRAY[]::TEXT[]);
 
     IF EXISTS (SELECT 1 FROM companies WHERE code = v_code) THEN
         RAISE EXCEPTION 'Company % already exists', v_code;
     END IF;
 
-    -- Every identifier must be new: an alias, code or exchange id that already
-    -- belongs to another company would make lookups ambiguous.
-    FOREACH v_alias IN ARRAY array_remove(ARRAY[v_code, v_name, v_nse_symbol, v_bse_code, v_isin, v_cin] || v_aliases, NULL)
+    -- Code, name and aliases must be new: one that already belongs to another
+    -- company (as its code, name, alias or a non-ticker identifier) makes lookups ambiguous.
+    FOREACH v_alias IN ARRAY ARRAY[v_code, v_name] || v_aliases
     LOOP
         SELECT c.code INTO v_taken_by
-        FROM companies c LEFT JOIN company_aliases a ON a.company_id = c.id
-        WHERE lower(v_alias) IN (lower(c.code), lower(c.name), lower(c.nse_symbol), lower(c.bse_code),
-                                 lower(c.isin), lower(c.cin), lower(a.alias::text))
+        FROM companies c
+        WHERE lower(v_alias) IN (lower(c.code), lower(c.name))
+           OR EXISTS (SELECT 1 FROM company_aliases a WHERE a.company_id = c.id AND lower(a.alias::text) = lower(v_alias))
+           OR EXISTS (SELECT 1 FROM company_identifiers i WHERE i.company_id = c.id AND i.type <> 'ticker'
+                      AND upper(i.value) = upper(v_alias))
         LIMIT 1;
         IF v_taken_by IS NOT NULL THEN
             RAISE EXCEPTION '"%" already identifies company %', v_alias, v_taken_by;
         END IF;
     END LOOP;
 
-    INSERT INTO companies (code, name, nse_symbol, bse_code, isin, cin, sector, fy_end_month, status)
-    VALUES (v_code, v_name, v_nse_symbol, v_bse_code, v_isin, v_cin, v_sector, v_fy_end_month, v_status)
+    INSERT INTO companies (code, name, country, sector, fy_end_month, status)
+    VALUES (v_code, v_name, upper(v_country), v_sector, v_fy_end_month, v_status)
     RETURNING id INTO v_company_id;
 
     INSERT INTO company_aliases (company_id, alias)
     SELECT v_company_id, unnest(v_aliases);
 
-    RAISE NOTICE 'Added company % (%) with % alias(es)', v_code, v_name, cardinality(v_aliases);
+    -- Identifiers: 'ticker:EXCHANGE:SYMBOL' or 'type:value'.
+    FOREACH v_item IN ARRAY v_identifiers
+    LOOP
+        v_type := lower(split_part(v_item, ':', 1));
+        IF v_type = 'ticker' THEN
+            v_exchange := upper(split_part(v_item, ':', 2));
+            v_value    := split_part(v_item, ':', 3);
+            IF v_exchange = '' OR v_value = '' THEN
+                RAISE EXCEPTION 'Ticker "%" must be written ticker:EXCHANGE:SYMBOL, e.g. ticker:NASDAQ:MSFT', v_item;
+            END IF;
+        ELSE
+            v_exchange := NULL;
+            v_value    := substr(v_item, length(split_part(v_item, ':', 1)) + 2);
+        END IF;
+
+        SELECT c.code INTO v_taken_by
+        FROM company_identifiers i JOIN companies c ON c.id = i.company_id
+        WHERE i.type = v_type AND COALESCE(i.exchange, '') = COALESCE(v_exchange, '') AND upper(i.value) = upper(v_value)
+        LIMIT 1;
+        IF v_taken_by IS NOT NULL THEN
+            RAISE EXCEPTION 'Identifier "%" already belongs to company %', v_item, v_taken_by;
+        END IF;
+
+        -- The table checks the type (ticker, isin, lei, cik, cin, figi, registry).
+        INSERT INTO company_identifiers (company_id, type, exchange, value)
+        VALUES (v_company_id, v_type, v_exchange, v_value);
+    END LOOP;
+
+    RAISE NOTICE 'Added company % (%) with % identifier(s) and % alias(es)',
+        v_code, v_name, cardinality(v_identifiers), cardinality(v_aliases);
 
     IF v_dry_run THEN
-        RAISE EXCEPTION 'DRY RUN - nothing kept. Company % (%) with % alias(es) would be added. Set v_dry_run := false to add.',
-            v_code, v_name, cardinality(v_aliases);
+        RAISE EXCEPTION 'DRY RUN - nothing kept. Company % (%) with % identifier(s) and % alias(es) would be added. Set v_dry_run := false to add.',
+            v_code, v_name, cardinality(v_identifiers), cardinality(v_aliases);
     END IF;
 END $$;
 

@@ -9,8 +9,10 @@ import { Company } from '../../services/stocks-api';
 import { DISCLAIMER, MOTTO } from '../../disclaimer';
 
 const OFSS: Company = {
-  company_id: 'OFSS', name: 'Oracle Financial Services Software Ltd', nse_symbol: 'OFSS',
-  bse_code: '532466', cin: '', isin: 'INE881D01027', aliases: [], sector: '', fy_end_month: 3, status: 'active',
+  company_id: 'OFSS', name: 'Oracle Financial Services Software Ltd', country: 'IN',
+  identifiers: [{ type: 'ticker', exchange: 'NSE', value: 'OFSS' }, { type: 'ticker', exchange: 'BSE', value: '532466' },
+                { type: 'isin', exchange: '', value: 'INE881D01027' }],
+  nse_symbol: 'OFSS', bse_code: '532466', cin: '', isin: 'INE881D01027', aliases: [], sector: '', fy_end_month: 3, status: 'active',
 };
 
 describe('Home', () => {
@@ -98,6 +100,19 @@ describe('Home', () => {
     const footer = page.querySelector('footer.disclaimer') as HTMLElement;
     expect(footer.querySelectorAll('p').length).toBe(DISCLAIMER.length);
     expect(footer.textContent).toContain('never recommends buying, selling or holding any security');
+  });
+
+  it('shows any exchange: a US company card reads "NASDAQ MSFT · ISIN ..."', async () => {
+    const msft: Company = { ...OFSS, company_id: 'MSFT', name: 'Microsoft Corporation', country: 'US',
+      identifiers: [{ type: 'ticker', exchange: 'NASDAQ', value: 'MSFT' }, { type: 'isin', exchange: '', value: 'US5949181045' },
+                    { type: 'cik', exchange: '', value: '0000789019' }],
+      nse_symbol: '', bse_code: '', isin: 'US5949181045' };
+    const { fixture, request, page } = await open();
+    request.flush([msft]);
+    await fixture.whenStable();
+    const codes = [...page.querySelectorAll('.codes > span')].map((el) => el.textContent?.replace(/\s+/g, ' ').trim());
+    expect(codes).toEqual(['NASDAQ MSFT', 'ISIN US5949181045']);          // CIK stays in the details
+    expect(page.textContent).not.toContain('NSE');
   });
 
   it('says so when no company has data', async () => {

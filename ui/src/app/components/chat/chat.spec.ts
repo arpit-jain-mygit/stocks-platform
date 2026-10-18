@@ -8,8 +8,9 @@ import { Chat, SUGGESTED_QUESTIONS } from './chat';
 import { AskResponse, Company } from '../../services/stocks-api';
 
 const OFSS: Company = {
-  company_id: 'OFSS', name: 'Oracle Financial Services Software Ltd', nse_symbol: 'OFSS', bse_code: '532466',
-  cin: '', isin: '', aliases: [], sector: '', fy_end_month: 3, status: 'active',
+  company_id: 'OFSS', name: 'Oracle Financial Services Software Ltd', country: 'IN',
+  identifiers: [{ type: 'ticker', exchange: 'NSE', value: 'OFSS' }],
+  nse_symbol: 'OFSS', bse_code: '', cin: '', isin: '', aliases: [], sector: '', fy_end_month: 3, status: 'active',
 };
 const ANSWER: AskResponse = {
   answer: 'Basic EPS was **303.54** [S1].\n<script>alert(1)</script>',

@@ -13,7 +13,7 @@ Financial figures are **not** stored in Postgres (only inside chunk text in Qdra
 
 ## Postgres
 
-Created by `db/migrations/` (`python db/migrate.py`): `001_init.sql` tables, `002_filings.sql` filings, `003_seed_reference_data.sql` starting companies + doc types. New companies / doc types: `db/samples/add_company.sql`. Filings are written by the ingestion pipeline. Row level security is on for every table, so Supabase's public REST API can't read them; the app connects as the database owner.
+Created by `db/migrations/` (`python db/migrate.py`): `001_init.sql` tables, `002_filings.sql` filings, `003_seed_reference_data.sql` starting companies + doc types, `004_company_identifiers.sql` identifiers for any market + country. New companies / doc types: `db/samples/add_company.sql`. Filings are written by the ingestion pipeline. Row level security is on for every table, so Supabase's public REST API can't read them; the app connects as the database owner.
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS citext;
@@ -22,10 +22,9 @@ CREATE TABLE companies (
     id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     code          TEXT    NOT NULL UNIQUE,      -- 'VIDEOIND' = company_id in Qdrant; never changes
     name          TEXT    NOT NULL,             -- 'Videocon Industries Ltd'
-    cin           TEXT    UNIQUE,
-    isin          TEXT    UNIQUE,
-    nse_symbol    TEXT    UNIQUE,
-    bse_code      TEXT    UNIQUE,
+    country       TEXT,                         -- ISO code 'IN', 'US' (004)
+    cin, isin, nse_symbol, bse_code             -- old (001): copied to company_identifiers by 004, no longer
+                                                --   read or written by the app; a later migration drops them
     sector        TEXT,
     fy_end_month  SMALLINT NOT NULL DEFAULT 3 CHECK (fy_end_month BETWEEN 1 AND 12),
     status        TEXT    NOT NULL DEFAULT 'active'
@@ -33,6 +32,15 @@ CREATE TABLE companies (
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- 004: one row per identifier, any market. A ticker always has an exchange
+-- (the same symbol can mean different companies on different exchanges).
+CREATE TABLE company_identifiers (
+    company_id  BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    type        TEXT   NOT NULL,                -- ticker / isin / lei / cik / cin / figi / registry
+    exchange    TEXT,                           -- tickers only: 'NSE', 'BSE', 'NASDAQ', 'NYSE', 'LSE' ...
+    value       TEXT   NOT NULL                 -- 'VIDEOIND', '511389', 'US5949181045' ...
+);  -- unique (type, exchange, upper(value))
 
 CREATE TABLE company_aliases (
     company_id  BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
@@ -77,9 +85,19 @@ CREATE UNIQUE INDEX filings_one_live
 
 `companies`
 
-| id | code | name | cin | nse_symbol | bse_code | fy_end_month | status |
-|---|---|---|---|---|---|---|---|
-| 1 | VIDEOIND | Videocon Industries Ltd | L99999MH1986PLC103624 | VIDEOIND | 511389 | 3 | insolvency |
+| id | code | name | country | fy_end_month | status |
+|---|---|---|---|---|---|
+| 1 | VIDEOIND | Videocon Industries Ltd | IN | 3 | insolvency |
+
+`company_identifiers`
+
+| company_id | type | exchange | value |
+|---|---|---|---|
+| 1 | ticker | NSE | VIDEOIND |
+| 1 | ticker | BSE | 511389 |
+| 1 | cin | | L99999MH1986PLC103624 |
+
+A US company looks the same: `ticker NASDAQ MSFT`, `isin US5949181045`, `cik 0000789019`.
 
 `company_aliases`
 

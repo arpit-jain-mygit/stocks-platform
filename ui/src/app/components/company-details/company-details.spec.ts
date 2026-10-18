@@ -8,9 +8,11 @@ import { CompanyDetails } from './company-details';
 import { CompanyDetail, DocTypes } from '../../services/stocks-api';
 
 const OFSS: CompanyDetail = {
-  company_id: 'OFSS', name: 'Oracle Financial Services Software Ltd', nse_symbol: 'OFSS', bse_code: '532466',
-  cin: '', isin: 'INE881D01027', aliases: ['i-flex solutions', 'Oracle Financial Services'], sector: '',
-  fy_end_month: 3, status: 'active',
+  company_id: 'OFSS', name: 'Oracle Financial Services Software Ltd', country: 'IN',
+  identifiers: [{ type: 'ticker', exchange: 'NSE', value: 'OFSS' }, { type: 'ticker', exchange: 'BSE', value: '532466' },
+                { type: 'isin', exchange: '', value: 'INE881D01027' }],
+  nse_symbol: 'OFSS', bse_code: '532466', cin: '', isin: 'INE881D01027',
+  aliases: ['i-flex solutions', 'Oracle Financial Services'], sector: '', fy_end_month: 3, status: 'active',
   filings: [{
     doc_id: '4a9e8ce73533206b361bc60de95dc8114f2fbe93ae648463a5b2a8492973a08d',
     file_name: 'ofss-software-limited-ar-2025-26.pdf', doc_type: 'annual_report', fiscal_year: 2026, quarter: null,
@@ -53,6 +55,9 @@ describe('CompanyDetails', () => {
     expect(page.textContent).toContain('active');                       // status
     expect(page.textContent).toContain('532466');                       // details: BSE code shown
     expect(page.textContent).not.toContain('INE881D01027');             // ... ISIN not shown
+    expect(page.textContent).toContain('NSE ticker');                   // listings, any exchange
+    expect(page.textContent).toContain('BSE ticker');
+    expect(page.textContent).toContain('IN');                           // country
     expect(page.textContent).toContain('March');                        // FY end month as a name
     expect(page.querySelectorAll('.chips li').length).toBe(2);          // aliases
     expect(page.textContent).toContain('Filings (1)');

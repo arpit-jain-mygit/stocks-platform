@@ -9,7 +9,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { Chat } from '../../components/chat/chat';
 import { CompanyDetails } from '../../components/company-details/company-details';
 import { APP_NAME, DISCLAIMER, MOTTO } from '../../disclaimer';
-import { Company, StocksApi } from '../../services/stocks-api';
+import { Company, Identifier, StocksApi, identifierLabel } from '../../services/stocks-api';
 
 /** Screen width from which the details move into the right-hand panel. */
 export const WIDE_SCREEN = '(min-width: 900px)';
@@ -59,6 +59,13 @@ export class Home {
       },
     });
   }
+
+  /** Identifiers shown on a card: tickers and ISIN (CIN, LEI ... appear in the details). */
+  protected cardIdentifiers(company: Company): Identifier[] {
+    return company.identifiers.filter((id) => id.type === 'ticker' || id.type === 'isin');
+  }
+
+  protected readonly label = identifierLabel;
 
   /** Selects a company, or unselects it if it is already selected. */
   protected toggle(id: string): void {

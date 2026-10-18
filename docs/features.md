@@ -47,7 +47,9 @@
   - [x] Market-neutral prompts; the answer prompt lists each cited company's year-end
   - [x] Any currency and number format in table detection and units lines ($ € £ ¥ ₹; 1,234.5 / 1.234,5 / 1,23,456)
   - [ ] Filing sources per market (e.g. US EDGAR 10-K / 10-Q, UK / EU ESEF) and per-market eval sets - later
-  - [ ] Per-filing currency, units and accounting standard (Ind AS / IFRS / US GAAP) in Postgres; general exchange + ticker listings
+  - [x] Company identifiers for any market: `company_identifiers` (ticker per exchange, ISIN, LEI, CIK, CIN …) + `country` (migration 004); lookup by `EXCHANGE:TICKER`
+  - [ ] Drop the old `nse_symbol` / `bse_code` / `cin` / `isin` columns (later migration, once 004 is deployed)
+  - [ ] Per-filing currency, units and accounting standard (Ind AS / IFRS / US GAAP) in Postgres
   - [ ] Non-English filings (OCR language packs, multilingual questions)
 - [ ] **Hindi and other languages support**
 - [ ] **Move platform to AWS or another cloud** (evaluate options)
