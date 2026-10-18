@@ -11,7 +11,7 @@
       <label class="picker">
         <span class="visually-hidden">Company</span>
         <select [(ngModel)]="company" name="company">
-          <option value="">All companies</option>
+          <option value="" disabled>Choose a company</option>
           @for (c of companies(); track c.company_id) {
             <option [value]="c.company_id">{{ c.name }}</option>
           }
@@ -47,7 +47,11 @@
         }
       } @empty {
         <div class="intro">
-          <p class="hint">Ask about {{ company() ? companyName(company()) : 'any company' }}. Answers cite the filing and page.</p>
+          @if (company()) {
+            <p class="hint">Ask about {{ companyName(company()) }}. Answers cite the filing and page.</p>
+          } @else {
+            <p class="hint">Choose a company above to start asking questions.</p>
+          }
           <!-- The full disclaimer, until the first question is asked. -->
           <section class="notice" aria-label="Disclaimer">
             <strong>Disclaimer.</strong>
@@ -65,7 +69,7 @@
     <ul class="suggestions" aria-label="Suggested questions">
       @for (s of suggestions; track s.label) {
         <li>
-          <button type="button" (click)="ask(s.question)" [disabled]="waiting()" [title]="s.question"
+          <button type="button" (click)="ask(s.question)" [disabled]="waiting() || !company()" [title]="s.question"
                   [attr.aria-label]="s.question">{{ s.label }}</button>
         </li>
       }
@@ -76,7 +80,7 @@
       <label class="visually-hidden" for="chat-question">Your question</label>
       <textarea id="chat-question" #box rows="2" name="question" [(ngModel)]="question" (keydown)="onKeydown($event)"
                 placeholder="Type a question… (Enter to send)" [disabled]="waiting()"></textarea>
-      <button type="submit" class="send" [disabled]="waiting() || question().trim().length < 3">Send</button>
+      <button type="submit" class="send" [disabled]="waiting() || !company() || question().trim().length < 3">Send</button>
     </form>
   </section>
 }

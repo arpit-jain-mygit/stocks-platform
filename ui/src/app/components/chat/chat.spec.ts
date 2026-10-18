@@ -112,10 +112,13 @@ describe('Chat', () => {
     expect(sources).not.toContain('page ');
   });
 
-  it('"All companies" sends no company', async () => {
+  it('cannot send until a company is chosen', async () => {
     const { fixture, page } = await openChat(null);
     await ask(fixture, page, 'Which company had the highest revenue?');
-    expect(backend.expectOne('/api/ask').request.body).toEqual({ question: 'Which company had the highest revenue?' });
+    backend.expectNone('/api/ask');                                       // nothing sent without a company
+    expect((page.querySelector('.send') as HTMLButtonElement).disabled).toBe(true);
+    expect(page.querySelector('.hint')?.textContent).toContain('Choose a company');
+    expect(page.querySelector('.suggestions button')?.hasAttribute('disabled')).toBe(true);
   });
 
   it('does not send questions shorter than 3 characters', async () => {

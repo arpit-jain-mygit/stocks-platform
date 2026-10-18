@@ -2,7 +2,8 @@
 //
 // A floating "Ask a question" button opens it (bottom-right; full screen on phones).
 // Each question goes to POST /api/ask (services/stocks-api.ts). The company picker
-// starts on the company selected on the home view, or "All companies".
+// starts on the company selected on the home view. A company must be chosen before
+// a question can be sent (one company per question: its figures and citations belong together).
 // The conversation lives only in memory: it is gone after a page reload.
 
 import { Component, ElementRef, Injector, afterNextRender, effect, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
@@ -13,7 +14,7 @@ import { Company, Source, StocksApi } from '../../services/stocks-api';
 
 /**
  * Suggested questions, always shown above the question box - what most stock researchers
- * ask about any company. Clicking one sends it for the company in the picker.
+ * ask about the company in the picker. Clicking one sends it for that company.
  */
 export const SUGGESTED_QUESTIONS: { label: string; question: string }[] = [
   { label: 'Revenue & profit', question: 'What were the revenue and net profit for the latest period?' },
@@ -102,14 +103,14 @@ export class Chat {
   /** Sends the question (3+ characters) and adds the answer or an error to the conversation. */
   protected send(): void {
     const text = this.question().trim();
-    if (text.length < 3 || this.waiting()) return;
     const company = this.company();
+    if (text.length < 3 || this.waiting() || !company) return;
 
     this.messages.update((m) => [...m, { role: 'user', text, company }]);
     this.question.set('');
     this.waiting.set(true);
 
-    this.api.ask({ question: text, ...(company ? { company } : {}) }).subscribe({
+    this.api.ask({ question: text, company }).subscribe({
       next: (reply) => {
         this.messages.update((m) => [...m, { role: 'assistant', text: reply.answer, company, sources: reply.sources }]);
         this.waiting.set(false);
@@ -125,9 +126,9 @@ export class Chat {
     this.messages.set([]);
   }
 
-  /** "OFSS" -> "Oracle Financial Services Software Ltd"; "" -> "All companies". */
+  /** "OFSS" -> "Oracle Financial Services Software Ltd"; "" -> "Choose a company". */
   protected companyName(code: string): string {
-    return code ? (this.companies().find((c) => c.company_id === code)?.name ?? code) : 'All companies';
+    return code ? (this.companies().find((c) => c.company_id === code)?.name ?? code) : 'Choose a company';
   }
 
   /** The answer as safe HTML: text escaped, **bold** kept, [S1] shown as a small tag with its brackets. */
