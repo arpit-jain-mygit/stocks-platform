@@ -98,41 +98,43 @@ select {
   gap: 10px;
 }
 
-.empty {
-  margin-top: auto;              /* sit at the bottom, next to the question box */
-}
-
 .hint {
-  margin: 0 4px 10px;
+  margin: auto 8px;
+  text-align: center;
   color: var(--muted);
   font-size: 0.875rem;
 }
 
-/* Starter questions as clickable, wrapping "chips". */
+/* Suggested questions: short "chips" above the question box, wrapping onto a second line if needed. */
 .suggestions {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
   margin: 0;
-  padding: 0;
+  padding: 8px 12px;
   list-style: none;
+  border-top: 1px solid var(--border);
 }
 
 .suggestions button {
-  padding: 8px 12px;
+  padding: 6px 12px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 999px;
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 0.875rem;
-  text-align: left;
+  font-size: 0.8rem;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.suggestions button:hover {
+.suggestions button:hover:not(:disabled) {
   border-color: var(--accent);
+}
+
+.suggestions button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .suggestions button:focus-visible {

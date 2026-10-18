@@ -20,7 +20,7 @@ static files). Generated with `ng new` (Angular CLI 22.2.3).
 | `src/app/app.routes.ts` | URL -> view (`/` = home; anything else -> home) |
 | `src/app/app.config.ts` | App-wide providers (router, error listener) |
 | `src/app/services/stocks-api.ts` | The only code that calls the backend (`/api/...`) |
-| `src/app/components/chat/` | Chat window: company picker, 5 suggested starter questions (`SUGGESTED_QUESTIONS`), conversation (in memory only), answers with `[S1]` tags + sources list; Enter sends, Esc closes; full screen on phones. Each question = 1 embedding + 1 answer model call |
+| `src/app/components/chat/` | Chat window: company picker, 5 always-visible suggested questions as short chips (`SUGGESTED_QUESTIONS`: label + full question), conversation (in memory only), answers with `[S1]` tags + sources list; Enter sends, Esc closes; full screen on phones. Each question = 1 embedding + 1 answer model call |
 | `src/app/components/company-details/` | Shown inside an opened card: status, code, NSE, BSE, FY end; aliases; filings (type, file, ingested) (`GET /api/companies/<code>` + `/api/doc-types`, loaded on open) |
 | `src/app/pages/home/` | Home view: company cards (left) + details panel (right, sticky); phones: details under the card. `home.ts` (logic), `home.html` (markup), `home.css` (styles), `home.spec.ts` (tests) |
 | `proxy.conf.mjs` | Local dev: forwards `/api/...` to the backend and adds `X-API-Key` |

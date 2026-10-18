@@ -77,7 +77,7 @@ describe('Chat', () => {
     expect(page.textContent).not.toContain('Thinking');
   });
 
-  it('shows 5 suggested questions; clicking one sends it for the picked company', async () => {
+  it('always shows 5 suggested questions; clicking one sends it for the picked company', async () => {
     const { fixture, page } = await openChat();
     const buttons = page.querySelectorAll<HTMLButtonElement>('.suggestions button');
     expect(buttons.length).toBe(5);
@@ -85,8 +85,16 @@ describe('Chat', () => {
 
     buttons[1].click();
     await fixture.whenStable();
-    expect(backend.expectOne('/api/ask').request.body).toEqual({ question: SUGGESTED_QUESTIONS[1], company: 'OFSS' });
-    expect(page.querySelector('.suggestions')).toBeNull();               // hidden once the chat has started
+    const request = backend.expectOne('/api/ask');
+    expect(buttons[1].textContent?.trim()).toBe(SUGGESTED_QUESTIONS[1].label);      // short label on the chip
+    expect(request.request.body).toEqual({ question: SUGGESTED_QUESTIONS[1].question, company: 'OFSS' });   // full question sent
+    expect(buttons[0].disabled).toBe(true);                              // no second question while waiting
+
+    request.flush({ answer: 'ok', sources: [] });
+    await fixture.whenStable();
+    const after = page.querySelectorAll<HTMLButtonElement>('.suggestions button');
+    expect(after.length).toBe(5);                                        // still shown after an answer
+    expect(after[0].disabled).toBe(false);
   });
 
   it('"All companies" sends no company', async () => {

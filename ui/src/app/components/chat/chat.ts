@@ -11,15 +11,15 @@ import { FormsModule } from '@angular/forms';
 import { Company, Source, StocksApi } from '../../services/stocks-api';
 
 /**
- * Starter questions shown in an empty chat - what most stock researchers ask first
- * about any company. Clicking one sends it for the company in the picker.
+ * Suggested questions, always shown above the question box - what most stock researchers
+ * ask about any company. Clicking one sends it for the company in the picker.
  */
-export const SUGGESTED_QUESTIONS = [
-  'What were the revenue and net profit for the latest period?',
-  'What is the earnings per share (EPS)?',
-  'How much debt does the company have, and what are its finance costs?',
-  'Has the company declared a dividend? How much?',
-  'What key risks, auditor qualifications or legal cases are mentioned?',
+export const SUGGESTED_QUESTIONS: { label: string; question: string }[] = [
+  { label: 'Revenue & profit', question: 'What were the revenue and net profit for the latest period?' },
+  { label: 'EPS', question: 'What is the earnings per share (EPS)?' },
+  { label: 'Debt & finance costs', question: 'How much debt does the company have, and what are its finance costs?' },
+  { label: 'Dividend', question: 'Has the company declared a dividend? How much?' },
+  { label: 'Risks & legal', question: 'What key risks, auditor qualifications or legal cases are mentioned?' },
 ];
 
 /** One bubble in the conversation. */

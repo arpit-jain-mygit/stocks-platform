@@ -46,20 +46,23 @@
           <div class="msg error" role="alert"><p>{{ m.text }}</p></div>
         }
       } @empty {
-        <div class="empty">
-          <p class="hint">Ask about {{ company() ? companyName(company()) : 'any company' }}. Answers cite the filing and page.</p>
-          <!-- Starter questions: one click sends the question. -->
-          <ul class="suggestions" aria-label="Suggested questions">
-            @for (q of suggestions; track q) {
-              <li><button type="button" (click)="ask(q)">{{ q }}</button></li>
-            }
-          </ul>
-        </div>
+        <p class="hint">Ask about {{ company() ? companyName(company()) : 'any company' }}. Answers cite the filing and page.</p>
       }
       @if (waiting()) {
         <div class="msg assistant thinking">Thinking&hellip;</div>
       }
     </div>
+
+    <!-- Suggested questions: always visible as short chips; one click sends the full question
+         (shown on hover, and read out by screen readers). -->
+    <ul class="suggestions" aria-label="Suggested questions">
+      @for (s of suggestions; track s.label) {
+        <li>
+          <button type="button" (click)="ask(s.question)" [disabled]="waiting()" [title]="s.question"
+                  [attr.aria-label]="s.question">{{ s.label }}</button>
+        </li>
+      }
+    </ul>
 
     <!-- The question box. -->
     <form class="composer" (ngSubmit)="send()">
