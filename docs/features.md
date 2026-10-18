@@ -42,7 +42,15 @@
 - [x] **No investment advice** (motto: "Insights from the filings, not tips for the market.")
   - [x] Answer prompt rule 0 + exact reply `NO_ADVICE` (`utils/prompts.py`); eval cases `no_advice` (OFSS 2, VIDEOIND 1)
   - [x] UI: motto under the title, full disclaimer in the page footer and in the chat before the first question (`ui/src/app/disclaimer.ts`)
-- [ ] **Global companies** (any market; English filings for now)
+- [ ] **More file formats** (today: PDF only; the pipeline rejects anything else)
+  - [ ] Office slides `.pptx` / `.ppt`: text from each slide (python-pptx), images via the vision model; one card per slide with its slide number as the "page"
+  - [ ] Spreadsheets `.xlsx` / `.xls`: one sheet = one section; each row becomes a fact card (label + column headers + values, with units); keep formulas' values, not formulas
+  - [ ] CSV `.csv`: header row = column names; one fact card per row; numbers parsed with locale rules (`1,234.5`, `1.234,5`, `1,23,456`)
+  - [ ] Word `.docx` (announcements, transcripts exported from Word): paragraphs and tables, same chunking rules
+  - [ ] Plain text / Markdown `.txt` / `.md` (transcripts)
+  - [ ] Keep one `doc_id` per file (SHA-256 of its bytes), same dedup and "one live filing" rules; the stored `file_name` shows the format
+  - [ ] API `/ingest` and `ingest.pipeline` accept the new types; the UI upload stays PDF-only until then
+- - [ ] **Global companies** (any market; English filings for now)
   - [x] Periods follow each company's financial-year end (`fy_end_month`): `Q3 FY25`, `FY25`, `Q3 2025`, `2025`
   - [x] Market-neutral prompts; the answer prompt lists each cited company's year-end
   - [x] Any currency and number format in table detection and units lines ($ € £ ¥ ₹; 1,234.5 / 1.234,5 / 1,23,456)
