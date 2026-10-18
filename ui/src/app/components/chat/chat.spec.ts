@@ -52,6 +52,7 @@ describe('Chat', () => {
 
   it('starts closed, opens from the button, picker follows the selected company', async () => {
     const { page } = await openChat();
+    expect(page.querySelector('.notice')?.textContent).toContain('does not provide investment');   // disclaimer first
     expect(page.querySelector('[role="dialog"]')).not.toBeNull();
     expect((page.querySelector('select') as HTMLSelectElement).value).toBe('OFSS');
     expect(document.activeElement).toBe(page.querySelector('textarea'));   // ready to type

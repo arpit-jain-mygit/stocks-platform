@@ -6,6 +6,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Home } from './home';
 import { Company } from '../../services/stocks-api';
+import { DISCLAIMER, MOTTO } from '../../disclaimer';
 
 const OFSS: Company = {
   company_id: 'OFSS', name: 'Oracle Financial Services Software Ltd', nse_symbol: 'OFSS',
@@ -88,6 +89,16 @@ describe('Home', () => {
     } finally {
       window.matchMedia = original;
     }
+  });
+
+  it('shows the motto under the title and the full disclaimer at the bottom', async () => {
+    const { fixture, request, page } = await open();
+    request.flush([]);
+    await fixture.whenStable();
+    expect(page.querySelector('.motto')?.textContent).toBe(MOTTO);
+    const footer = page.querySelector('footer.disclaimer') as HTMLElement;
+    expect(footer.querySelectorAll('p').length).toBe(DISCLAIMER.length);
+    expect(footer.textContent).toContain('never recommends buying, selling or holding any security');
   });
 
   it('says so when no company has data', async () => {

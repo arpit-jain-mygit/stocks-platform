@@ -56,6 +56,12 @@ Return ONLY the page content as GitHub-flavoured Markdown. Rules:
 # single quarters) is matched or worked out the same way.
 NOT_FOUND = "I could not find this in the ingested filings."
 
+# The platform's promise: insights from the filings, never investment advice.
+# Sent word for word when a question asks whether to buy / sell / hold, or for a price target.
+NO_ADVICE = ("I can't recommend buying, selling or holding any stock. I can help you research it from the "
+             "filings, for example its revenue and profit trend, EPS, debt, dividends, or the risks and "
+             "auditor remarks it reports.")
+
 ANSWER_QUESTION = """You answer questions about listed companies' financial filings.
 Use ONLY the sources below for facts and figures.
 
@@ -82,6 +88,12 @@ How periods work (use this to match a question to columns):
   and say so if you do.
 
 Rules:
+0. Never give investment advice. If the question asks whether to buy, sell or hold
+   a stock, whether it is a good investment, or for a price target or share-price
+   forecast, reply with exactly:
+   """ + NO_ADVICE + """
+   If the question also asks for facts from the filings, answer those after that
+   sentence, following the rules below.
 1. If the sources do not contain the answer, reply with exactly:
    """ + NOT_FOUND + """
 2. Prefer a figure printed in the sources. Quote it exactly, with its currency,

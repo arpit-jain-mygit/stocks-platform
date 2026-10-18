@@ -111,3 +111,12 @@ def test_answer_prompt_sent_to_the_model_includes_the_companies(client, llm, mak
     client.post("/ask", json={"question": "What was revenue from operations?", "company": "VIDEOIND"})
     [prompt] = llm["answer"].prompts
     assert "Companies:\n- VIDEOIND (Videocon Industries Ltd): financial year ends in March" in prompt
+
+
+# =====================================================================================
+# 4. No investment advice - the platform's promise
+# =====================================================================================
+def test_answer_prompt_forbids_investment_advice_with_the_exact_reply():
+    assert "Never give investment advice" in prompts.ANSWER_QUESTION
+    assert prompts.NO_ADVICE in prompts.ANSWER_QUESTION
+    assert prompts.NO_ADVICE.startswith("I can't recommend buying, selling or holding any stock.")

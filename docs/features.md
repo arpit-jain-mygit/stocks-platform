@@ -39,6 +39,9 @@
   - [x] Never put `APP_API_KEY` in browser code – Vercel server function `api/proxy.ts` (allowlisted endpoints)
 - [ ] **Users support** (Google login)
 - [ ] **10 companies support**
+- [x] **No investment advice** (motto: "Insights from the filings, not tips for the market.")
+  - [x] Answer prompt rule 0 + exact reply `NO_ADVICE` (`utils/prompts.py`); eval cases `no_advice` (OFSS 2, VIDEOIND 1)
+  - [x] UI: motto under the title, full disclaimer in the page footer and in the chat before the first question (`ui/src/app/disclaimer.ts`)
 - [ ] **Global companies** (any market; English filings for now)
   - [x] Periods follow each company's financial-year end (`fy_end_month`): `Q3 FY25`, `FY25`, `Q3 2025`, `2025`
   - [x] Market-neutral prompts; the answer prompt lists each cited company's year-end

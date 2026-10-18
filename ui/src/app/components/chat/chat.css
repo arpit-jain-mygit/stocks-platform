@@ -98,11 +98,34 @@ select {
   gap: 10px;
 }
 
+.intro {
+  margin-top: auto;              /* sit at the bottom, next to the question box */
+}
+
 .hint {
-  margin: auto 8px;
+  margin: 0 8px 10px;
   text-align: center;
   color: var(--muted);
   font-size: 0.875rem;
+}
+
+/* The disclaimer box shown before the first question. */
+.notice {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.notice strong {
+  color: var(--text);
+}
+
+.notice p {
+  margin: 4px 0 0;
 }
 
 /* Suggested questions: short "chips" above the question box, wrapping onto a second line if needed. */

@@ -12,9 +12,37 @@ h1 {
   font-size: 2rem;
 }
 
+.motto {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
 .subtitle {
   margin: 0 0 32px;
   color: var(--muted);
+}
+
+/* Disclaimer at the bottom of the page: small, muted, readable width. */
+.disclaimer {
+  max-width: 760px;
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.disclaimer h2 {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.disclaimer p {
+  margin: 0 0 6px;
 }
 
 h2 {

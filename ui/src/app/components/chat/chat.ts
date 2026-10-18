@@ -8,6 +8,7 @@
 import { Component, ElementRef, Injector, afterNextRender, effect, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { DISCLAIMER } from '../../disclaimer';
 import { Company, Source, StocksApi } from '../../services/stocks-api';
 
 /**
@@ -52,6 +53,7 @@ export class Chat {
   protected readonly waiting = signal(false);
   protected readonly question = signal('');
   protected readonly suggestions = SUGGESTED_QUESTIONS;
+  protected readonly disclaimer = DISCLAIMER;   // shown before the first question
   /** The picker's value: follows the home view's selection until the user changes it. */
   protected readonly company = linkedSignal(() => this.companyId() ?? '');
 

@@ -19,6 +19,7 @@ static files). Generated with `ng new` (Angular CLI 22.2.3).
 | `src/app/app.ts` / `app.html` | Root frame: only `<router-outlet>`, where the current page goes |
 | `src/app/app.routes.ts` | URL -> view (`/` = home; anything else -> home) |
 | `src/app/app.config.ts` | App-wide providers (router, error listener) |
+| `src/app/disclaimer.ts` | Motto and full disclaimer text (header, footer, chat) - edit the wording here only |
 | `src/app/services/stocks-api.ts` | The only code that calls the backend (`/api/...`) |
 | `src/app/components/chat/` | Chat window: company picker, 5 always-visible suggested questions as short chips (`SUGGESTED_QUESTIONS`: label + full question), conversation (in memory only), answers with `[S1]` tags + sources list; Enter sends, Esc closes; full screen on phones. Each question = 1 embedding + 1 answer model call |
 | `src/app/components/company-details/` | Shown inside an opened card: status, code, NSE, BSE, FY end; aliases; filings (type, file, ingested) (`GET /api/companies/<code>` + `/api/doc-types`, loaded on open) |

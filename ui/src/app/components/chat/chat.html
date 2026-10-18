@@ -46,7 +46,14 @@
           <div class="msg error" role="alert"><p>{{ m.text }}</p></div>
         }
       } @empty {
-        <p class="hint">Ask about {{ company() ? companyName(company()) : 'any company' }}. Answers cite the filing and page.</p>
+        <div class="intro">
+          <p class="hint">Ask about {{ company() ? companyName(company()) : 'any company' }}. Answers cite the filing and page.</p>
+          <!-- The full disclaimer, until the first question is asked. -->
+          <section class="notice" aria-label="Disclaimer">
+            <strong>Disclaimer.</strong>
+            @for (paragraph of disclaimer; track $index) { <p>{{ paragraph }}</p> }
+          </section>
+        </div>
       }
       @if (waiting()) {
         <div class="msg assistant thinking">Thinking&hellip;</div>

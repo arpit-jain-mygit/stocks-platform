@@ -4,6 +4,7 @@
 <main class="home">
   <header>
     <h1>Stocks Platform</h1>
+    <p class="motto">{{ motto }}</p>
     <p class="subtitle">Ask questions about listed companies&rsquo; filings.</p>
   </header>
 
@@ -65,6 +66,12 @@
       </aside>
     }
   </div>
+
+  <!-- Disclaimer: research only, never investment advice. -->
+  <footer class="disclaimer" aria-labelledby="disclaimer-heading">
+    <h2 id="disclaimer-heading">Disclaimer</h2>
+    @for (paragraph of disclaimer; track $index) { <p>{{ paragraph }}</p> }
+  </footer>
 
   <!-- Chat window: asks /ask about the selected company (or all companies). -->
   <app-chat [companies]="companies()" [companyId]="openId()" />
