@@ -14,7 +14,7 @@ Related: [README.md](README.md) · [features.md](features.md) · [UX.md](UX.md)
 |---|---|---|
 | 2026-10-18 | Chose Terraform, `ap-south-1`, API + frontend first, default CloudFront / API Gateway addresses | Decisions recorded in section 0 |
 | 2026-10-18 | Confirmed `ap-south-1` (Mumbai) is enabled by default | No opt-in needed |
-| 2026-10-18 | Checked CLI: AWS CLI 2.36 installed; Terraform not installed | `brew install terraform` still to do (2.1) |
+| 2026-10-18 | Checked CLI: AWS CLI 2.36 installed; Terraform not installed at that time | Installed later (see below) |
 | 2026-10-18 | CLI showed signed-in user `matchanalyzer-cli` (another project) | Not used for this project |
 | 2026-10-18 | Started creating a classic IAM user in the IAM console | Stopped in favour of IAM Identity Center, which gives temporary credentials. If an IAM user `stocks-insights-admin` was created there, delete it (IAM → Users) |
 | 2026-10-18 | Enabled IAM Identity Center as an **account instance** (not an organization), single region `ap-south-1` | Organization would have switched the account to pay-as-you-go and expired free-tier credits. Account instance can't be upgraded to an organization later |
@@ -22,13 +22,15 @@ Related: [README.md](README.md) · [features.md](features.md) · [UX.md](UX.md)
 | 2026-10-18 | Set up MFA (authenticator app on phone) for `stocks-insights-admin` | MFA is required by the organisation's policy |
 | 2026-10-18 | Access portal URL noted: `https://d-9f675bd66a.awsapps.com/start` | Not a secret |
 | 2026-10-18 | Found that the Identity Center account instance has no "Multi-account permissions" (permission sets), so it cannot grant CLI access to the account | Decided on option 2: an IAM user with an access key. The Identity Center user stays unused |
+| 2026-10-18 | Terraform 1.16.6 installed to `~/bin` (Homebrew blocked by outdated Command Line Tools) | `terraform -version` works |
+| 2026-10-18 | Created IAM user `stocks-insights-deploy`, access key, profile `stocks-insights` (region `ap-south-1`, output `json`) | `aws sts get-caller-identity --profile stocks-insights` works |
 
 ### Still to do
 
 - [x] Create IAM user `stocks-insights-deploy` (IAM → Users → Create user), with no console access, and attach `PowerUserAccess` and `IAMFullAccess` for now (narrow in Phase 5)
 - [x] Create an access key for the user (use case: Command Line Interface). Save the key and secret somewhere safe; the secret is shown only once
 - [x] Configure the profile on your Mac: `aws configure --profile stocks-insights` (enter the key, the secret, region `ap-south-1`, output `json`)
-- [ ] Install Terraform: `brew install terraform`
+- [x] Install Terraform 1.16.6 (Homebrew install was blocked by outdated Command Line Tools, so the binary was installed to `~/bin` and added to PATH; `terraform -version` works)
 - [x] Check with `aws sts get-caller-identity --profile stocks-insights` (done: account 552808407801, JSON returned)
 - [ ] Put a reminder in your calendar to rotate the access key in 90 days (IAM → Users → stocks-insights-deploy → Security credentials)
 
@@ -37,7 +39,7 @@ Related: [README.md](README.md) · [features.md](features.md) · [UX.md](UX.md)
 ## 0. Decisions (answer before Phase 2)
 
 - [x] **IaC tool:** Terraform (chosen)
-- [x] **AWS login:** IAM user `stocks-insights-deploy` with an access key, used by the CLI and Terraform (option 2). Identity Center account instance does not assign AWS account access, so it is not used for the CLI for this project, created by you in the console (steps below). Not the `matchanalyzer-cli` user, which belongs to another project
+- [x] **AWS login:** IAM user `stocks-insights-deploy` with an access key, used by the CLI and Terraform (option 2). The Identity Center account instance does not assign AWS account access, so it is not used for the CLI. Not the `matchanalyzer-cli` user, which belongs to another project
 - [x] **Scope of first release:** API + frontend only, with ingestion still on Railway
 - [x] **Region:** `ap-south-1` (Mumbai)
 - [x] **Domain:** default CloudFront and API Gateway addresses for now (no domain cost). A custom domain can be added in section 4.2 later: roughly $10–15 a year for a standard domain (more for `.ai`), plus about $0.50 a month for a Route 53 hosted zone
