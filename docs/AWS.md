@@ -10,11 +10,22 @@ Related: [README.md](README.md) · [features.md](features.md) · [UX.md](UX.md)
 
 ## 0. Decisions (answer before Phase 2)
 
-- [ ] **IaC tool:** Terraform (recommended) or AWS CDK (Python)
-- [ ] **AWS login:** a new IAM user or SSO profile for this project (recommended). The current CLI user is `matchanalyzer-cli`, from another project
-- [ ] **Scope of first release:** API + frontend only, with ingestion still on Railway (recommended)
-- [ ] **Region:** `ap-south-1` (Mumbai)
-- [ ] **Domain:** a custom domain, or the default CloudFront / API Gateway addresses
+- [x] **IaC tool:** Terraform (chosen)
+- [ ] **AWS login:** a new IAM Identity Center (SSO) user for this project, created by you in the console (steps below). Not the `matchanalyzer-cli` user, which belongs to another project
+- [x] **Scope of first release:** API + frontend only, with ingestion still on Railway
+- [x] **Region:** `ap-south-1` (Mumbai)
+- [x] **Domain:** default CloudFront and API Gateway addresses for now (no domain cost). A custom domain can be added in section 4.2 later: roughly $10–15 a year for a standard domain (more for `.ai`), plus about $0.50 a month for a Route 53 hosted zone
+
+---
+
+### 0.1 Create the project login (you, in the AWS console)
+
+1. Sign in to the AWS console as the account owner (root) and open **IAM Identity Center**. Enable it if you haven't. Choose `ap-south-1` as its home region.
+2. **Users → Add user**: username `stocks-insights-admin`, your email. Set a password and accept the invitation email.
+3. **AWS accounts → your account → Assign users**: select this user and create a permission set named `StocksInsightsDeploy`. For the first setup use `PowerUserAccess` plus `IAMFullAccess`; we will narrow it to least privilege in Phase 5.
+4. On your Mac, run `aws configure sso` and enter the start URL and region `ap-south-1`. Name the profile `stocks-insights`.
+5. Check it works: `aws sts get-caller-identity --profile stocks-insights`. It should show an ARN with `stocks-insights` in the role name, not `matchanalyzer-cli`.
+6. Tell me when step 5 works, and I'll tick section 2.2.
 
 ---
 
