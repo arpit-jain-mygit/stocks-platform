@@ -3,10 +3,44 @@
 Ask questions about Indian listed companies' financial-result PDFs.
 Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · Data design: [db-design.md](db-design.md) · Roadmap: [features.md](features.md)
 
-Repo layout: **`backend/`** = FastAPI app, ingestion, eval, SQL (deployed to Railway) · **`ui/`** = web UI (Vercel, later) · **`docs/`** = these docs.
+Repo layout: **`backend/`** = FastAPI app, ingestion, eval, SQL (deployed to Railway) · **`ui/`** = web UI (Vercel) · **`docs/`** = these docs.
 Code paths in the docs (e.g. `ingest/chunker.py`, `data/`, `eval/`) are inside `backend/`.
 
 All commands run from **`backend/`** with the virtual environment active (`.env`, `data/` and the caches live there).
+
+---
+
+## Contents
+
+- [1. Setup](#1-setup)
+  - [1.1 Prerequisites](#11-prerequisites)
+  - [1.2 Install](#12-install)
+  - [1.3 The .env file](#13-the-env-file)
+  - [1.4 Postgres](#14-postgres)
+  - [1.5 Companies, periods and document types](#15-companies-periods-and-document-types)
+- [2. Run the whole ingestion pipeline (one command)](#2-run-the-whole-ingestion-pipeline-one-command)
+- [3. Run the API](#3-run-the-api)
+  - [3.1 Start the server](#31-start-the-server)
+  - [3.2 Endpoints](#32-endpoints)
+  - [3.3 Way 1 – Browser (Swagger UI)](#33-way-1--browser-swagger-ui)
+  - [3.4 Way 2 – curl](#34-way-2--curl)
+  - [3.5 Way 3 – Python](#35-way-3--python)
+  - [3.6 Way 4 – Postman / Insomnia](#36-way-4--postman--insomnia)
+  - [3.7 Way 5 – Eval sets (one per company)](#37-way-5--eval-sets-one-per-company)
+  - [3.8 Automated API tests (run before and after every refactor)](#38-automated-api-tests-run-before-and-after-every-refactor)
+- [4. Run each piece on its own](#4-run-each-piece-on-its-own)
+  - [Examples (Videocon sample)](#examples-videocon-sample)
+- [5. Remove ingested data](#5-remove-ingested-data)
+  - [5.1 Delete APIs (Postgres + Qdrant together)](#51-delete-apis-postgres--qdrant-together)
+  - [5.2 SQL samples (Postgres only)](#52-sql-samples-postgres-only)
+  - [5.3 Backup and restore (Postgres + Qdrant)](#53-backup-and-restore-postgres--qdrant)
+- [6. Deploy the backend to Railway](#6-deploy-the-backend-to-railway)
+- [7. Deploy the UI to Vercel](#7-deploy-the-ui-to-vercel)
+- [8. Files the runs create](#8-files-the-runs-create)
+- [9. Troubleshooting](#9-troubleshooting)
+  - [Checking Railway logs](#checking-railway-logs)
+  - [Vercel (UI)](#vercel-ui)
+  - [Looking inside the Railway container (SSH)](#looking-inside-the-railway-container-ssh)
 
 ---
 
