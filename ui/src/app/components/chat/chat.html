@@ -1,0 +1,64 @@
+<!-- chat.html - Floating "Ask a question" button + the chat window it opens.
+     @if / @for are Angular's template conditions and loops; [(ngModel)] links a field to a signal. -->
+@if (!open()) {
+  <button type="button" class="launcher" (click)="toggle()" aria-haspopup="dialog">Ask a question</button>
+}
+
+@if (open()) {
+  <section class="window" role="dialog" aria-label="Ask about the filings">
+    <!-- Title bar: company picker, clear, close. -->
+    <header class="bar">
+      <label class="picker">
+        <span class="visually-hidden">Company</span>
+        <select [(ngModel)]="company" name="company">
+          <option value="">All companies</option>
+          @for (c of companies(); track c.company_id) {
+            <option [value]="c.company_id">{{ c.name }}</option>
+          }
+        </select>
+      </label>
+      @if (messages().length) {
+        <button type="button" class="icon" (click)="clear()" title="Clear conversation" aria-label="Clear conversation">&#x21BA;</button>
+      }
+      <button type="button" class="icon" (click)="close()" title="Close" aria-label="Close chat">&times;</button>
+    </header>
+
+    <!-- The conversation. aria-live: screen readers read new answers out loud. -->
+    <div class="messages" #list aria-live="polite">
+      @for (m of messages(); track $index) {
+        @if (m.role === 'user') {
+          <div class="msg user">
+            <p>{{ m.text }}</p>
+            <span class="meta">{{ companyName(m.company) }}</span>
+          </div>
+        } @else if (m.role === 'assistant') {
+          <div class="msg assistant">
+            <p [innerHTML]="answerHtml(m.text)"></p>
+            @if (m.sources?.length) {
+              <ul class="sources" aria-label="Sources">
+                @for (s of m.sources; track s.ref) {
+                  <li><span class="cite">{{ s.ref }}</span> {{ s.file_name }}, page {{ s.pages }}</li>
+                }
+              </ul>
+            }
+          </div>
+        } @else {
+          <div class="msg error" role="alert"><p>{{ m.text }}</p></div>
+        }
+      } @empty {
+        <p class="hint">Ask about {{ companyName(company()) }} &mdash; e.g. &ldquo;What was the net profit?&rdquo; Answers cite the filing and page.</p>
+      }
+      @if (waiting()) {
+        <div class="msg assistant thinking">Thinking&hellip;</div>
+      }
+    </div>
+
+    <!-- The question box. -->
+    <form class="composer" (ngSubmit)="send()">
+      <label class="visually-hidden" for="chat-question">Your question</label>
+      <textarea id="chat-question" #box rows="2" name="question" [(ngModel)]="question" (keydown)="onKeydown($event)"
+                placeholder="Type a question… (Enter to send)" [disabled]="waiting()"></textarea>
+      <button type="submit" class="send" [disabled]="waiting() || question().trim().length < 3">Send</button>
+    </form>
+  </section>
+}

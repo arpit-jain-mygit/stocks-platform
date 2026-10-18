@@ -3,8 +3,10 @@
 // Wide screens (900px+): company cards on the left, the selected company's details in a
 // panel on the right, so the rest of the list stays visible.
 // Narrow screens (phones): no room for two columns - details open under the card instead.
+// The chat window ("Ask a question", bottom-right) asks about the selected company or all of them.
 
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Chat } from '../../components/chat/chat';
 import { CompanyDetails } from '../../components/company-details/company-details';
 import { Company, StocksApi } from '../../services/stocks-api';
 
@@ -13,7 +15,7 @@ export const WIDE_SCREEN = '(min-width: 900px)';
 
 @Component({
   selector: 'app-home',
-  imports: [CompanyDetails],     // <app-company-details> in the panel or under a card
+  imports: [CompanyDetails, Chat],   // <app-company-details> (panel / under a card), <app-chat> (chat window)
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

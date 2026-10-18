@@ -48,6 +48,30 @@ export interface CompanyDetail extends Company {
   filings: Filing[];
 }
 
+/** A question for POST /ask. Empty company = search every company. */
+export interface AskRequest {
+  question: string;       // at least 3 characters
+  company?: string;       // company code, e.g. "OFSS"
+}
+
+/** One chunk the answer cites, e.g. [S1]. */
+export interface Source {
+  ref: string;            // "S1"
+  file_name: string;
+  pages: string;          // "91" or "6-7"
+  section: string;
+  kind: string;           // prose / table / fact
+  score: number;          // search similarity (higher = closer)
+  doc_id: string;
+  company_id: string;
+}
+
+/** The answer from POST /ask, with the sources it cites. */
+export interface AskResponse {
+  answer: string;
+  sources: Source[];
+}
+
 /** Allowed document types (GET /doc-types). */
 export interface DocTypes {
   default: string;
@@ -67,6 +91,11 @@ export class StocksApi {
   /** One company and its filings. id = company code, e.g. "OFSS". */
   company(id: string): Observable<CompanyDetail> {
     return this.http.get<CompanyDetail>(`${this.base}/companies/${encodeURIComponent(id)}`);
+  }
+
+  /** Asks a question; the answer cites its sources. Costs 1 embedding + 1 answer model call. */
+  ask(request: AskRequest): Observable<AskResponse> {
+    return this.http.post<AskResponse>(`${this.base}/ask`, request);
   }
 
   /** Document type codes and their display names. */

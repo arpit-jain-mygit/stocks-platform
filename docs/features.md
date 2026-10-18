@@ -18,7 +18,8 @@
 
 - [ ] **UI support** (Angular single page app in `ui/`, see `ui/README.md`)
   - [x] Angular 22 app, router, Hello World home page, unit tests
-  - [ ] Ask page: question + company -> answer with cited sources (calls the backend)
+  - [x] Chat window ("Ask a question"): question + company -> answer with cited sources (`POST /ask`)
+  - [ ] Chat: keep the conversation across reloads; send earlier turns for follow-up questions
   - [x] Home page lists companies with ingested filings (`GET /companies?ingested=true`)
   - [x] API key kept server-side: dev proxy (`proxy.conf.mjs`) + Vercel function (`api/proxy.ts`, allowlisted endpoints)
   - [x] Company cards + details panel on the right (phones: under the card; address stays `/`): status, code, NSE, BSE, FY end; aliases; filings with type, file, ingested date (`GET /companies/{company}`)

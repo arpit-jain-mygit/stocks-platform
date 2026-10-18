@@ -3,7 +3,9 @@
 The browser app for stocks-platform. Today: one screen with a card per company that has ingested
 filings. Clicking a card shows its details (status, codes, aliases, filings) in a panel on the right,
 so the list stays visible; on phones (under 900px) the details open under the card instead. The
-address stays `/`. Next: ask questions (see "UI support" in [../docs/features.md](../docs/features.md)).
+"Ask a question" button (bottom-right) opens a chat window that asks `POST /ask` about the selected
+company or all companies, and shows answers with their cited sources. The address stays `/`.
+Roadmap: "UI support" in [../docs/features.md](../docs/features.md).
 
 Angular 22, standalone components, router, plain CSS, no server-side rendering (a pure SPA: Vercel serves
 static files). Generated with `ng new` (Angular CLI 22.2.3).
@@ -18,6 +20,7 @@ static files). Generated with `ng new` (Angular CLI 22.2.3).
 | `src/app/app.routes.ts` | URL -> view (`/` = home; anything else -> home) |
 | `src/app/app.config.ts` | App-wide providers (router, error listener) |
 | `src/app/services/stocks-api.ts` | The only code that calls the backend (`/api/...`) |
+| `src/app/components/chat/` | Chat window: company picker, conversation (in memory only), answers with `[S1]` tags + sources list; Enter sends, Esc closes; full screen on phones. Each question = 1 embedding + 1 answer model call |
 | `src/app/components/company-details/` | Shown inside an opened card: status, code, NSE, BSE, FY end; aliases; filings (type, file, ingested) (`GET /api/companies/<code>` + `/api/doc-types`, loaded on open) |
 | `src/app/pages/home/` | Home view: company cards (left) + details panel (right, sticky); phones: details under the card. `home.ts` (logic), `home.html` (markup), `home.css` (styles), `home.spec.ts` (tests) |
 | `proxy.conf.mjs` | Local dev: forwards `/api/...` to the backend and adds `X-API-Key` |
