@@ -9,6 +9,11 @@
 --
 -- v_dry_run = true (default): checks everything, reports, then undoes it
 --   (ends with an error "DRY RUN ..." on purpose). false = really add.
+--
+-- Block 1: replace every '?' with the company's value, or with NULL if it has
+-- none (e.g. a US company has no NSE / BSE code or CIN). The block refuses to
+-- run while any '?' is left. The comments show two filled-in examples:
+-- TCS (India, year ends in March) and Microsoft (US, year ends in June).
 
 
 -- =====================================================================================
@@ -16,21 +21,35 @@
 -- =====================================================================================
 DO $$
 DECLARE
-    v_code        TEXT     := 'TCS';                        -- stable key used everywhere (NSE symbol recommended)
-    v_name        TEXT     := 'Tata Consultancy Services Ltd';
-    v_nse_symbol  TEXT     := 'TCS';
-    v_bse_code    TEXT     := NULL;                         -- e.g. '532540'
-    v_isin        TEXT     := NULL;                         -- e.g. 'INE467B01029'
-    v_cin         TEXT     := NULL;
-    v_sector      TEXT     := NULL;
-    v_status      TEXT     := 'active';                     -- active / suspended / delisted / insolvency
-    v_aliases     TEXT[]   := ARRAY['Tata Consultancy Services Limited', 'Tata Consultancy Services'];
-    v_dry_run     BOOLEAN  := true;                         -- false = really add
+    v_code         TEXT     := '?';      -- stable key used everywhere, e.g. 'TCS' / 'MSFT' (ticker recommended)
+    v_name         TEXT     := '?';      -- e.g. 'Tata Consultancy Services Ltd' / 'Microsoft Corporation'
+    v_nse_symbol   TEXT     := '?';      -- e.g. 'TCS' / NULL (not listed on NSE)
+    v_bse_code     TEXT     := '?';      -- e.g. '532540' / NULL
+    v_isin         TEXT     := '?';      -- e.g. 'INE467B01029' / 'US5949181045'
+    v_cin          TEXT     := '?';      -- e.g. 'L22210MH1995PLC084781' / NULL (Indian companies only)
+    v_sector       TEXT     := '?';      -- e.g. 'IT services' / 'Software' / NULL
+    v_fy_end_month SMALLINT := NULL;     -- month the financial year ends: 3 (March, e.g. TCS) / 6 (June, e.g. Microsoft) / 12 (December)
+    v_status       TEXT     := '?';      -- active / suspended / delisted / insolvency, e.g. 'active'
+    v_aliases      TEXT[]   := ARRAY['?'];   -- e.g. ARRAY['Tata Consultancy Services Limited', 'Tata Consultancy Services']
+                                             --      ARRAY['Microsoft', 'Microsoft Corp']
+    v_dry_run      BOOLEAN  := true;     -- false = really add
 
     v_company_id  BIGINT;
     v_alias       TEXT;
     v_taken_by    TEXT;
 BEGIN
+    -- Every '?' must be replaced (with a value or NULL), and the year-end month set.
+    IF '?' = ANY (ARRAY[v_code, v_name, v_nse_symbol, v_bse_code, v_isin, v_cin, v_sector, v_status] || v_aliases) THEN
+        RAISE EXCEPTION 'Replace every ''?'' at the top of the block with a value or NULL';
+    END IF;
+    IF v_code IS NULL OR v_name IS NULL OR v_status IS NULL THEN
+        RAISE EXCEPTION 'v_code, v_name and v_status are required';
+    END IF;
+    IF v_fy_end_month IS NULL THEN
+        RAISE EXCEPTION 'Set v_fy_end_month (1-12): the month the financial year ends, e.g. 3 = March, 6 = June';
+    END IF;
+    v_aliases := coalesce(v_aliases, ARRAY[]::TEXT[]);
+
     IF EXISTS (SELECT 1 FROM companies WHERE code = v_code) THEN
         RAISE EXCEPTION 'Company % already exists', v_code;
     END IF;
@@ -49,8 +68,8 @@ BEGIN
         END IF;
     END LOOP;
 
-    INSERT INTO companies (code, name, nse_symbol, bse_code, isin, cin, sector, status)
-    VALUES (v_code, v_name, v_nse_symbol, v_bse_code, v_isin, v_cin, v_sector, v_status)
+    INSERT INTO companies (code, name, nse_symbol, bse_code, isin, cin, sector, fy_end_month, status)
+    VALUES (v_code, v_name, v_nse_symbol, v_bse_code, v_isin, v_cin, v_sector, v_fy_end_month, v_status)
     RETURNING id INTO v_company_id;
 
     INSERT INTO company_aliases (company_id, alias)
