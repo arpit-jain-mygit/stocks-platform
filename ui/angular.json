@@ -2,7 +2,8 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "npm"
+    "packageManager": "npm",
+    "analytics": "44869174-c907-4deb-9075-70c331806104"
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -62,7 +63,10 @@
               "buildTarget": "stocks-ui:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "proxyConfig": "proxy.conf.mjs"
+          }
         },
         "test": {
           "builder": "@angular/build:unit-test"

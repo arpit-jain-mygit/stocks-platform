@@ -51,6 +51,13 @@ def test_companies_and_doc_types(client):
     assert "annual_report" in {t["code"] for t in types["doc_types"]}
 
 
+def test_companies_ingested_filter_lists_only_companies_with_data(client, make_pdf, ingest):
+    assert client.get("/companies", params={"ingested": "true"}).json() == []      # nothing ingested yet
+    ingest(make_pdf())                                                             # Videocon only
+    assert [c["company_id"] for c in client.get("/companies", params={"ingested": "true"}).json()] == ["VIDEOIND"]
+    assert len(client.get("/companies").json()) == 2                               # default: every company
+
+
 # =====================================================================================
 # 2. Ingestion
 # =====================================================================================

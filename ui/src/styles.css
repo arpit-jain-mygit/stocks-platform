@@ -5,6 +5,9 @@
   --bg: #ffffff;
   --text: #1a1a1a;
   --muted: #5f6368;
+  --border: #dadce0;
+  --surface: #f8f9fa;
+  --danger: #c5221f;
   color-scheme: light dark;
 }
 
@@ -13,6 +16,9 @@
     --bg: #121212;
     --text: #e8e8e8;
     --muted: #a0a4a8;
+    --border: #3c4043;
+    --surface: #1e1f20;
+    --danger: #f28b82;
   }
 }
 

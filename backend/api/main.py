@@ -5,7 +5,7 @@ Endpoints:
   GET  /health                 is the server up?
   POST /ingest                 upload a PDF (+ company, period) -> starts ingestion
   GET  /jobs/{job_id}          progress of one ingestion
-  GET  /companies              companies the app knows (Postgres)
+  GET  /companies              companies the app knows (Postgres); ?ingested=true = only those with data
   GET  /doc-types              allowed document types (Postgres)
   GET  /documents              every ingested PDF and its status (optional ?company=&doc_type=)
   GET  /documents/{doc_id}     one PDF's record
@@ -174,9 +174,17 @@ def get_job(job_id: str) -> dict:
 
 
 @app.get("/companies", dependencies=[Depends(require_api_key)])
-def companies() -> list[dict]:
-    """Every company (ID, name, exchange codes, aliases)."""
-    return [asdict(c) for c in load_companies()]
+def companies(ingested: bool = False) -> list[dict]:
+    """
+    Every company (ID, name, exchange codes, aliases).
+    ?ingested=true -> only companies with at least one completely ingested filing
+    (what the UI lists - a company with no data can't answer questions).
+    """
+    found = load_companies()
+    if ingested:
+        with_data = {f["company_id"] for f in store.list_documents() if f.get("status") == "complete"}
+        found = [c for c in found if c.company_id in with_data]
+    return [asdict(c) for c in found]
 
 
 @app.get("/doc-types", dependencies=[Depends(require_api_key)])

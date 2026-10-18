@@ -145,7 +145,7 @@ uvicorn api.main:app --host 0.0.0.0 --port 8080
 | GET | `/health` | – | `{"status": "ok"}` (no key needed) |
 | POST | `/ingest` | form: `file`, `company`, `period` (`Q3 FY25`), `doc_type`, `force` | `skipped`, or `queued` + `job_id` |
 | GET | `/jobs/{job_id}` | – | `queued` → `running` → `complete` / `skipped` / `failed` |
-| GET | `/companies` | – | Known companies and their aliases |
+| GET | `/companies` | `ingested` (true = only companies with a complete filing) | Known companies and their aliases |
 | GET | `/doc-types` | – | Allowed document types + default |
 | GET | `/documents` | optional `?company=` `&doc_type=` | Every ingested PDF and its status |
 | GET | `/documents/{doc_id}` | – | One PDF's record |

@@ -1,5 +1,32 @@
-<!-- home.html - What the home page shows. {{ ... }} prints a value from home.ts. -->
+<!-- home.html - Home page: title, then the list of companies with data.
+     @if / @for are Angular's template conditions and loops. -->
 <main class="home">
-  <h1>{{ heading }}</h1>
-  <p>{{ subtitle }}</p>
+  <header>
+    <h1>Stocks Platform</h1>
+    <p class="subtitle">Ask questions about Indian listed companies&rsquo; filings.</p>
+  </header>
+
+  <section aria-labelledby="companies-heading">
+    <h2 id="companies-heading">Companies</h2>
+
+    @if (loading()) {
+      <p class="status">Loading companies&hellip;</p>
+    } @else if (error()) {
+      <p class="status error" role="alert">{{ error() }}</p>
+      <button type="button" (click)="load()">Try again</button>
+    } @else {
+      @for (company of companies(); track company.company_id) {
+        <article class="company">
+          <h3>{{ company.name }}</h3>
+          <dl>
+            @if (company.nse_symbol) { <div><dt>NSE</dt><dd>{{ company.nse_symbol }}</dd></div> }
+            @if (company.bse_code) { <div><dt>BSE</dt><dd>{{ company.bse_code }}</dd></div> }
+            @if (company.isin) { <div><dt>ISIN</dt><dd>{{ company.isin }}</dd></div> }
+          </dl>
+        </article>
+      } @empty {
+        <p class="status">No companies with ingested filings yet.</p>
+      }
+    }
+  </section>
 </main>

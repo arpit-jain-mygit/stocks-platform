@@ -1,7 +1,7 @@
 # ui - Stocks Platform web app (Angular single page app)
 
-The browser app for stocks-platform. Today: a Hello World home page. Next: ask questions against the
-backend API (see "UI support" in [../docs/features.md](../docs/features.md)).
+The browser app for stocks-platform. Today: a home page listing the companies that have ingested
+filings. Next: ask questions (see "UI support" in [../docs/features.md](../docs/features.md)).
 
 Angular 22, standalone components, router, plain CSS, no server-side rendering (a pure SPA: Vercel serves
 static files). Generated with `ng new` (Angular CLI 22.2.3).
@@ -15,23 +15,49 @@ static files). Generated with `ng new` (Angular CLI 22.2.3).
 | `src/app/app.ts` / `app.html` | Root frame: only `<router-outlet>`, where the current page goes |
 | `src/app/app.routes.ts` | URL -> page (`/` = home, anything else -> home) |
 | `src/app/app.config.ts` | App-wide providers (router, error listener) |
-| `src/app/pages/home/` | Home page: `home.ts` (logic), `home.html` (markup), `home.css` (styles), `home.spec.ts` (test) |
+| `src/app/services/stocks-api.ts` | The only code that calls the backend (`/api/...`) |
+| `src/app/pages/home/` | Home page: companies list. `home.ts` (logic), `home.html` (markup), `home.css` (styles), `home.spec.ts` (tests) |
+| `proxy.conf.mjs` | Local dev: forwards `/api/...` to the backend and adds `X-API-Key` |
+| `api/proxy.ts` | Vercel server function: same job in production, only for allowed endpoints |
 | `src/styles.css` | Global styles + light / dark colour tokens |
 | `public/` | Files copied as-is (favicon) |
-| `vercel.json` | Sends every URL to `index.html`, so refreshing a deep link works on Vercel |
+| `vercel.json` | `/api/...` -> `api/proxy.ts`; every other URL -> `index.html` (deep links work) |
+
+## How the UI reaches the backend (and why the key stays secret)
+
+```
+browser --/api/companies--> proxy (adds X-API-Key) --/companies--> backend (FastAPI)
+```
+
+The browser never sees `APP_API_KEY`: everything in Angular code is downloadable by any visitor. The proxy
+is `proxy.conf.mjs` locally and `api/proxy.ts` on Vercel. `api/proxy.ts` forwards only
+`GET companies / doc-types / documents` and `POST ask` - the risky delete and backup APIs are unreachable
+from the UI even if they are switched on.
 
 ## Run (from `ui/`)
 
-Needs Node.js (tested with 26) and npm.
+Needs Node.js (tested with 26) and npm, and the backend running (default: local on port 8000).
+
+1. Start the backend (other terminal, from `backend/` with the venv active):
+   ```bash
+   uvicorn api.main:app --reload
+   ```
+2. Start the UI:
+   ```bash
+   npm install
+   ```
+   ```bash
+   npm start
+   ```
+3. Open http://localhost:4200 - the page reloads on every save.
+
+The proxy uses `APP_API_KEY` from `../backend/.env` automatically. To use the Railway backend instead:
 
 ```bash
-npm install
-```
-```bash
-npm start
+STOCKS_API_URL=https://stocks-platform-production.up.railway.app STOCKS_API_KEY=<railway APP_API_KEY> npm start
 ```
 
-Open http://localhost:4200 - the page reloads on every save.
+Restart `npm start` after changing `proxy.conf.mjs` or `angular.json` (they are read once at start).
 
 ```bash
 npm test -- --watch=false
@@ -46,5 +72,7 @@ The build goes to `dist/stocks-ui/browser/` (what Vercel serves).
 
 - Import the GitHub repo `stocks-platform`, **Root Directory = `ui`**, framework preset **Angular**.
 - Output directory: `dist/stocks-ui/browser`.
+- Environment variables: `STOCKS_API_URL` (Railway URL) and `STOCKS_API_KEY` (Railway `APP_API_KEY`) -
+  read only by `api/proxy.ts` on the server.
 - Never put `APP_API_KEY` in this code - everything here is visible to visitors. Call the backend
   through a Vercel server route (or user login) instead.
