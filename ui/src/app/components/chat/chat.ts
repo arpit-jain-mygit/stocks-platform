@@ -19,7 +19,11 @@ export const SUGGESTED_QUESTIONS: { label: string; question: string }[] = [
   { label: 'Revenue & profit', question: 'What were the revenue and net profit for the latest period?' },
   { label: 'EPS', question: 'What is the earnings per share (EPS)?' },
   { label: 'Debt & finance costs', question: 'How much debt does the company have, and what are its finance costs?' },
-  { label: 'Dividend', question: 'Has the company declared a dividend? How much?' },
+  { label: 'Cash flow', question: 'What were the operating cash flow and free cash flow?' },
+  { label: 'Year on year', question: 'How did revenue and profit change compared with the same period last year?' },
+  { label: 'Segments', question: 'How did each business segment perform?' },
+  { label: 'Dividends & buybacks', question: 'What dividends and share buybacks were declared or paid?' },
+  { label: 'Outlook', question: 'What outlook or guidance did management give?' },
   { label: 'Risks & legal', question: 'What key risks, auditor qualifications or legal cases are mentioned?' },
 ];
 

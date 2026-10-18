@@ -82,8 +82,8 @@ describe('Chat', () => {
   it('always shows 5 suggested questions; clicking one sends it for the picked company', async () => {
     const { fixture, page } = await openChat();
     const buttons = page.querySelectorAll<HTMLButtonElement>('.suggestions button');
-    expect(buttons.length).toBe(5);
-    expect(SUGGESTED_QUESTIONS.length).toBe(5);
+    expect(buttons.length).toBe(9);
+    expect(SUGGESTED_QUESTIONS.length).toBe(9);
 
     buttons[1].click();
     await fixture.whenStable();
@@ -95,7 +95,7 @@ describe('Chat', () => {
     request.flush({ answer: 'ok', sources: [] });
     await fixture.whenStable();
     const after = page.querySelectorAll<HTMLButtonElement>('.suggestions button');
-    expect(after.length).toBe(5);                                        // still shown after an answer
+    expect(after.length).toBe(9);                                        // still shown after an answer
     expect(after[0].disabled).toBe(false);
   });
 
