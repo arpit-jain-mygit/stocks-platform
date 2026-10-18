@@ -1,7 +1,7 @@
 # Stocks RAG – How to run
 
 Ask questions about listed companies' financial filings (PDFs) - any market; filings in English.
-Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · Data design: [db-design.md](db-design.md) · Roadmap: [features.md](features.md) · UX ideas: [UX.md](UX.md)
+Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · Data design: [db-design.md](db-design.md) · Roadmap: [features.md](features.md) · UX ideas: [UX.md](UX.md) · AWS plan: [AWS.md](AWS.md)
 
 Repo layout: **`backend/`** = FastAPI app, ingestion, eval, SQL (deployed to Railway) · **`ui/`** = web UI (Vercel) · **`docs/`** = these docs.
 Code paths in the docs (e.g. `ingest/chunker.py`, `data/`, `eval/`) are inside `backend/`.

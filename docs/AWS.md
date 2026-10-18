@@ -1,0 +1,117 @@
+# AWS serverless – plan, steps and troubleshooting
+
+Goal: run stocks-insights.ai on AWS with pay-as-you-go pricing, provisioned with
+Terraform. Tick each box as it is done. Keep Supabase, Qdrant Cloud and Gemini as
+they are. Railway and Vercel stay as the fallback until AWS is proven.
+
+Related: [README.md](README.md) · [features.md](features.md) · [UX.md](UX.md)
+
+---
+
+## 0. Decisions (answer before Phase 2)
+
+- [ ] **IaC tool:** Terraform (recommended) or AWS CDK (Python)
+- [ ] **AWS login:** a new IAM user or SSO profile for this project (recommended). The current CLI user is `matchanalyzer-cli`, from another project
+- [ ] **Scope of first release:** API + frontend only, with ingestion still on Railway (recommended)
+- [ ] **Region:** `ap-south-1` (Mumbai)
+- [ ] **Domain:** a custom domain, or the default CloudFront / API Gateway addresses
+
+---
+
+## Phase 1 – Code changes (no AWS resources, no cost)
+
+Branch: `aws-serverless`.
+
+- [ ] **1.1 Storage abstraction.** A `Store` interface with a local-folder version (today) and an S3 version. Used by `utils/page_cache.py` and `utils/vector_cache.py`
+- [ ] **1.2 Job store.** Ingestion jobs saved to a `jobs` table (DynamoDB) instead of the in-memory dict in `api/main.py`
+- [ ] **1.3 Presigned uploads.** `POST /uploads` returns a presigned S3 URL; the client uploads there, then calls `POST /ingest` with the S3 key. Removes the 10 MB API Gateway limit
+- [ ] **1.4 Lambda entry point.** `api/lambda_handler.py` wraps the FastAPI app with Mangum. The same app still runs locally with uvicorn
+- [ ] **1.5 Container for Lambda.** A second Dockerfile (or a build target) based on the AWS Lambda Python base image
+- [ ] **1.6 Ingestion worker.** A small entry point (`python -m ingest.worker <s3-key> <job-id>`) for a Fargate task
+- [ ] **1.7 Config.** Read `CACHE_BACKEND=local|s3`, `JOB_BACKEND=memory|dynamodb`, `UPLOAD_BUCKET`, `CACHE_BUCKET`, `JOBS_TABLE` from environment variables
+- [ ] **1.8 Tests.** Existing 145 backend tests still pass; new tests for the S3 and DynamoDB stores using stubs (no AWS calls)
+- [ ] **1.9 Commit and review** (local only, push on your go-ahead)
+
+---
+
+## Phase 2 – Provision AWS with Terraform
+
+- [ ] **2.1 Install tools:** `brew install terraform` and `brew install awscli` (already installed)
+- [ ] **2.2 AWS login:** create the IAM user or SSO profile chosen in section 0, then `aws configure --profile stocks-insights`
+- [ ] **2.3 Budget alarm:** monthly budget with an email alert at 80% and 100%
+- [ ] **2.4 Remote state:** S3 bucket for Terraform state (versioning and encryption on) and a DynamoDB table for locks
+- [ ] **2.5 `infra/` folder:** `providers.tf`, `variables.tf`, `outputs.tf`, one module per component
+- [ ] **2.6 Secrets:** SSM Parameter Store (SecureString) for `APP_API_KEY`, `ADMIN_API_KEY`, `GEMINI_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`, `DATABASE_URL`. Values are entered once, not written into Terraform files
+- [ ] **2.7 Storage:** S3 buckets for the frontend, uploads and caches (private, encrypted, lifecycle rules on uploads)
+- [ ] **2.8 Metadata table:** DynamoDB `jobs` table (on-demand billing)
+- [ ] **2.9 Backend:** ECR repository, Lambda function (container image, 2–3 GB memory, 5 min timeout), API Gateway HTTP API, IAM role with least privilege
+- [ ] **2.10 Frontend:** CloudFront distribution with origin access control to the frontend bucket
+- [ ] **2.11 API routing:** CloudFront behaviours for `/api/*` to API Gateway, allowing only `companies*`, `doc-types`, `documents*`, `ask`, `uploads`, `jobs/*`. The `X-API-Key` header is added as a CloudFront origin header
+- [ ] **2.12 Ingestion (phase 2b, optional now):** Fargate task definition, ECS cluster, Step Functions state machine
+- [ ] **2.13 Monitoring:** CloudWatch log groups with a 30-day retention, alarms for Lambda errors and API 5xx
+- [ ] **2.14 Apply:** `terraform plan` reviewed by you, then `terraform apply`
+
+---
+
+## Phase 3 – Build and deploy
+
+- [ ] **3.1 Backend image:** build, push to ECR, update the Lambda function
+- [ ] **3.2 Database migrations:** run `python db/migrate.py` once from your Mac (or a one-off task). Migrations already applied to Supabase are skipped
+- [ ] **3.3 Frontend:** `npm run build`, upload `dist/stocks-ui/browser` to the frontend bucket, create a CloudFront invalidation
+- [ ] **3.4 Smoke tests:** `/health`, `/companies?ingested=true`, one question in the chat, one upload
+- [ ] **3.5 CI/CD:** GitHub Actions with OIDC (no stored AWS keys): backend workflow and frontend workflow, both running the tests first
+
+---
+
+## Phase 4 – Cut over
+
+- [ ] **4.1 Parallel run:** AWS and Railway/Vercel both up; compare answers for 10 questions
+- [ ] **4.2 Domain:** ACM certificate (us-east-1 for CloudFront), Route 53 record
+- [ ] **4.3 Switch:** point the domain at CloudFront
+- [ ] **4.4 Fallback:** keep Railway and Vercel running for one week, then decide whether to shut them down
+
+---
+
+## Phase 5 – Security and cost review
+
+- [ ] **5.1 WAF:** rate limit on `/api/ask` and `/api/uploads`
+- [ ] **5.2 Risky APIs:** keep `ENABLE_RISKY_DELETE_APIS` and `ENABLE_BACKUP_APIS` off in Lambda
+- [ ] **5.3 Secret rotation:** a dated note to rotate `APP_API_KEY` every 90 days
+- [ ] **5.4 Cost check:** Cost Explorer after the first full month, compared with the estimate
+
+---
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `AccessDenied` on `terraform apply` | The IAM user lacks a permission | Read the error for the action name; add it to the project's policy, never `AdministratorAccess` |
+| `BucketAlreadyExists` | S3 bucket names are global | Add an account ID or random suffix to the bucket name |
+| CloudFront shows 403 from S3 | Origin access control or bucket policy missing | Check the bucket policy allows `cloudfront.amazonaws.com` for this distribution only |
+| CloudFront certificate error | Certificate not in `us-east-1` | Request the ACM certificate in `us-east-1` |
+| API Gateway returns 413 | Upload larger than 10 MB sent through the API | Use presigned uploads (1.3) |
+| Lambda timeout (503 or 504) | Ingestion running inside the API request | Move ingestion to the Fargate worker (1.6, 2.12); `/ask` only needs a few seconds |
+| Lambda `Runtime.ExitError` or out of memory | Memory too low for PDF rendering | Raise memory to 2–3 GB |
+| Cold start of 5–10 seconds | Large container image | Trim dependencies; provisioned concurrency only if needed |
+| `InvalidParameterException` for the container image | Image not pushed to ECR yet, or wrong tag | Push first, then `terraform apply` again |
+| Terraform state lock error | An earlier run did not finish | `terraform force-unlock <id>` after checking nothing is running |
+| Duplicate jobs after a retry | The job store is not used by the worker | Check `JOB_BACKEND=dynamodb` and the job id passed to the worker |
+| Answers differ from Railway | Different `GEMINI_API_KEY` or environment variables | Compare SSM parameters with Railway's variables |
+| Surprise bill | Forgotten NAT gateway, or a Fargate task left running | Budget alarm (2.3); check Cost Explorer by service |
+
+---
+
+## Useful commands
+
+```bash
+aws sts get-caller-identity --profile stocks-insights
+```
+```bash
+cd infra && terraform init && terraform plan
+```
+```bash
+cd infra && terraform apply
+```
+```bash
+aws logs tail /aws/lambda/stocks-insights-api --follow --profile stocks-insights
+```
