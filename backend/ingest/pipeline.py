@@ -18,7 +18,7 @@ and thanks to the page and vector caches it only pays for the missing work.
 # --- Imports -----------------------------------------------------------------
 # One import per step, in pipeline order.
 from ingest.ids import doc_id_from_bytes
-from ingest.pdf_reader import read_pdf
+from ingest.formats import read_document
 from ingest.chunker import chunk_pages
 from ingest.embeddings import embed_chunks
 from ingest import store
@@ -88,7 +88,7 @@ def ingest_pdf(pdf_bytes: bytes, file_name: str, company: str, period: str,
     store.save_document(doc_id, status="processing", **details)
 
     # 2. pdf_reader - a page nobody could read means incomplete data, so stop.
-    pages = read_pdf(pdf_bytes)
+    pages = read_document(pdf_bytes, file_name)     # any supported type: PDF, CSV, XLSX, PPTX, DOCX, TXT, MD
     failed = [p.page_no for p in pages if p.source == "failed"]
     if failed:
         store.save_document(doc_id, status="failed", error=f"unreadable pages {failed}", **details)

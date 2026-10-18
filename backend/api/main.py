@@ -48,6 +48,7 @@ from pydantic import BaseModel, Field
 from api.security import require_api_key
 
 from ingest import store
+from ingest.formats import check_format
 from ingest.pipeline import check_existing, describe, ingest_pdf
 from query.answer import answer
 from query.search import build_filters
@@ -125,7 +126,7 @@ def health() -> dict:
 @app.post("/ingest", dependencies=[Depends(require_api_key)])
 async def ingest(
     background: BackgroundTasks,
-    file: UploadFile = File(..., description="The results PDF"),
+    file: UploadFile = File(..., description="The filing: .pdf, .csv, .xlsx, .pptx, .docx, .txt or .md"),
     company: str = Form(..., examples=["VIDEOIND"], description="ID, BSE code, name or alias from /companies"),
     period: str = Form(..., examples=["Q3 FY25"], description="e.g. 'Q3 FY25' or 'FY25'"),
     doc_type: str = Form("quarterly_results", description="code from /doc-types"),
@@ -136,13 +137,15 @@ async def ingest(
       - status "skipped" if this exact PDF is already stored (nothing to do), or
       - status "queued" with a job_id - follow it at GET /jobs/{job_id}.
     """
-    pdf_bytes = await file.read()
+    pdf_bytes = await file.read()     # any supported file type (see ingest/formats/)
 
     # Basic checks before any work.
     if len(pdf_bytes) > MAX_UPLOAD_MB * 1024 * 1024:
-        raise HTTPException(status_code=413, detail=f"PDF is larger than {MAX_UPLOAD_MB} MB")
-    if not pdf_bytes.startswith(b"%PDF"):
-        raise HTTPException(status_code=400, detail="File is not a PDF")
+        raise HTTPException(status_code=413, detail=f"File is larger than {MAX_UPLOAD_MB} MB")
+    try:
+        check_format(file.filename, pdf_bytes)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
     try:
         meta = describe(company, period, doc_type)   # known company? readable period? allowed doc type?
     except ValueError as error:

@@ -212,7 +212,7 @@ python -m ingest.pipeline /Users/arpit/Downloads/Microsoft-SlidesFY26Q1.pdf MSFT
 ```
 
 Things to keep in mind:
-- **Spreadsheets (`.xlsx`), PowerPoint (`.pptx`), CSV and Word files aren't accepted yet.** Export them to PDF first. Other formats are planned in [features.md](features.md).
+- **File types:** PDF, CSV, Excel (`.xlsx`), PowerPoint (`.pptx`), Word (`.docx`), text (`.txt`) and Markdown (`.md`). Each has its own reader class in `backend/ingest/formats/`, picked by a factory (`factory.py`). Pictures in PowerPoint slides with little text go to the vision model; spreadsheets and CSV are read cell by cell with no model calls. Legacy `.xls`, `.ppt` and `.doc` need converting first.
 - **Quote the period.** Without quotes, the shell splits `Q1 FY26` into two arguments and the command fails.
 - **A new period needs its company's year-end.** `"Q1 FY26"` means the quarter ended 30 Sep 2025 for MSFT (June year-end) but 30 Jun 2025 for a company that ends its year in March.
 

@@ -42,7 +42,7 @@
 - [x] **No investment advice** (motto: "Insights from the filings, not tips for the market.")
   - [x] Answer prompt rule 0 + exact reply `NO_ADVICE` (`utils/prompts.py`); eval cases `no_advice` (OFSS 2, VIDEOIND 1)
   - [x] UI: motto under the title, full disclaimer in the page footer and in the chat before the first question (`ui/src/app/disclaimer.ts`)
-- [ ] **More file formats** (today: PDF only; the pipeline rejects anything else)
+- [x] **More file formats** (PDF, CSV, XLSX, PPTX, DOCX, TXT, MD via the reader factory in `backend/ingest/formats/`)
   - [ ] Office slides `.pptx` / `.ppt`: text from each slide (python-pptx), images via the vision model; one card per slide with its slide number as the "page"
   - [ ] Spreadsheets `.xlsx` / `.xls`: one sheet = one section; each row becomes a fact card (label + column headers + values, with units); keep formulas' values, not formulas
   - [ ] CSV `.csv`: header row = column names; one fact card per row; numbers parsed with locale rules (`1,234.5`, `1.234,5`, `1,23,456`)
