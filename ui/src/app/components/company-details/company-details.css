@@ -38,12 +38,7 @@ dd {
   font-variant-numeric: tabular-nums;
 }
 
-.mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.85rem;
-}
-
-/* Long values (file names, CIN) break instead of widening the page. */
+/* Long values (file names) break instead of widening the page. */
 .wrap {
   overflow-wrap: anywhere;
 }

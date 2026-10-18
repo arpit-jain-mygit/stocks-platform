@@ -51,13 +51,16 @@ describe('CompanyDetails', () => {
     await fixture.whenStable();
 
     expect(page.textContent).toContain('active');                       // status
-    expect(page.textContent).toContain('532466');                       // details
+    expect(page.textContent).toContain('532466');                       // details: BSE code shown
+    expect(page.textContent).not.toContain('INE881D01027');             // ... ISIN not shown
     expect(page.textContent).toContain('March');                        // FY end month as a name
     expect(page.querySelectorAll('.chips li').length).toBe(2);          // aliases
     expect(page.textContent).toContain('Filings (1)');
     expect(page.textContent).toContain('FY26 (year ended 31-Mar-2026)');
     expect(page.textContent).toContain('Annual report');                // doc type name, not the code
-    expect(page.textContent).toContain('1,193');                        // chunks, formatted
+    expect(page.textContent).toContain('ofss-software-limited-ar-2025-26.pdf');   // file
+    expect(page.textContent).toContain('17 Oct 2026');                  // ingested date
+    expect(page.textContent).not.toContain('1,193');                    // chunks not shown
   });
 
   it('says so for an unknown company', async () => {

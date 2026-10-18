@@ -17,7 +17,7 @@ static files). Generated with `ng new` (Angular CLI 22.2.3).
 | `src/app/app.routes.ts` | URL -> view (`/` = home; anything else -> home) |
 | `src/app/app.config.ts` | App-wide providers (router, error listener) |
 | `src/app/services/stocks-api.ts` | The only code that calls the backend (`/api/...`) |
-| `src/app/components/company-details/` | Shown inside an opened card: details, aliases, filings (`GET /api/companies/<code>` + `/api/doc-types`, loaded on open) |
+| `src/app/components/company-details/` | Shown inside an opened card: status, code, NSE, BSE, FY end; aliases; filings (type, file, ingested) (`GET /api/companies/<code>` + `/api/doc-types`, loaded on open) |
 | `src/app/pages/home/` | Home view: expandable company cards (one open at a time). `home.ts` (logic), `home.html` (markup), `home.css` (styles), `home.spec.ts` (tests) |
 | `proxy.conf.mjs` | Local dev: forwards `/api/...` to the backend and adds `X-API-Key` |
 | `api/proxy.ts` | Vercel server function: same job in production, only for allowed endpoints |

@@ -1,8 +1,8 @@
 // company-details.ts - Everything about one company, shown inside its card on the home page
-// when the card is opened: details, aliases and filings. The page address never changes.
+// when the card is opened: key details, aliases and filings. The page address never changes.
 
 import { Component, effect, inject, input, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { CompanyDetail, StocksApi } from '../../services/stocks-api';
@@ -12,7 +12,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 
 @Component({
   selector: 'app-company-details',
-  imports: [DatePipe, DecimalPipe],   // date and number formatting in the template
+  imports: [DatePipe],   // date formatting in the template
   templateUrl: './company-details.html',
   styleUrl: './company-details.css',
 })

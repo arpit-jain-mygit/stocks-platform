@@ -21,7 +21,7 @@
   - [ ] Ask page: question + company -> answer with cited sources (calls the backend)
   - [x] Home page lists companies with ingested filings (`GET /companies?ingested=true`)
   - [x] API key kept server-side: dev proxy (`proxy.conf.mjs`) + Vercel function (`api/proxy.ts`, allowlisted endpoints)
-  - [x] Company cards expand in place (address stays `/`): details, aliases, filings (`GET /companies/{company}`)
+  - [x] Company cards expand in place (address stays `/`): status, code, NSE, BSE, FY end; aliases; filings with type, file, ingested date (`GET /companies/{company}`)
 - [ ] **Create the project in Git** (GitHub repo, private)
   - [ ] `.gitignore` before the first commit: `.env`, `.venv/`, caches, `data/` PDFs, `eval/results/`, backups (`*.json.gz`), `__pycache__/`
   - [ ] Check no secrets are in any file to be committed (keys only in `.env`; `.env.example` has placeholders)
