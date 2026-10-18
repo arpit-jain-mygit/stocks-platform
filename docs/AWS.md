@@ -25,11 +25,11 @@ Related: [README.md](README.md) · [features.md](features.md) · [UX.md](UX.md)
 
 ### Still to do
 
-- [ ] Create IAM user `stocks-insights-deploy` (IAM → Users → Create user), with no console access, and attach `PowerUserAccess` and `IAMFullAccess` for now (narrow in Phase 5)
-- [ ] Create an access key for the user (use case: Command Line Interface). Save the key and secret somewhere safe; the secret is shown only once
-- [ ] Configure the profile on your Mac: `aws configure --profile stocks-insights` (enter the key, the secret, region `ap-south-1`, output `json`)
+- [x] Create IAM user `stocks-insights-deploy` (IAM → Users → Create user), with no console access, and attach `PowerUserAccess` and `IAMFullAccess` for now (narrow in Phase 5)
+- [x] Create an access key for the user (use case: Command Line Interface). Save the key and secret somewhere safe; the secret is shown only once
+- [x] Configure the profile on your Mac: `aws configure --profile stocks-insights` (enter the key, the secret, region `ap-south-1`, output `json`)
 - [ ] Install Terraform: `brew install terraform`
-- [ ] Check with `aws sts get-caller-identity --profile stocks-insights`
+- [x] Check with `aws sts get-caller-identity --profile stocks-insights` (done: account 552808407801, JSON returned)
 - [ ] Put a reminder in your calendar to rotate the access key in 90 days (IAM → Users → stocks-insights-deploy → Security credentials)
 
 ---
