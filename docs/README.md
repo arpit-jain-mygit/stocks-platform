@@ -546,6 +546,7 @@ Build problems are in the deployment's **Build Logs**; migration problems in its
 | Page shows "Could not load companies" | Open `https://<your-app>.vercel.app/api/companies` to see the real error (one of the rows above) |
 | Build fails: "No Output Directory named … found" | Output Directory must be `dist/stocks-ui/browser`; Root Directory `ui` |
 | Refreshing the page gives 404 | `vercel.json` missing from `ui/` (it sends every URL to `index.html`) |
+| Logs: `Failed to load the ES module: /var/task/ui/api/proxy.js … set "type": "module"` then `SyntaxError: Unexpected token 'export'`; every `/api/...` call fails | Vercel compiles `api/proxy.ts` to `proxy.js` with `export` syntax, and Node only accepts that when the nearest `package.json` says `"type": "module"`. Fixed in `ui/package.json` (`"type": "module"`) - push, Vercel redeploys. Keep that line |
 
 Logs: Vercel project → **Logs** (runtime, filter `/api/proxy`) or Deployments → a deployment → **Build Logs**.
 
