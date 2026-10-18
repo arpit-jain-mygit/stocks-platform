@@ -75,7 +75,30 @@ def clean_reply(reply: str) -> str:
     lines = reply.rstrip().split("\n")
     while lines and (not lines[-1].strip() or SOURCE_LINE.match(lines[-1])):
         lines.pop()
-    return BARE_CITATION.sub(r"[S\1]", "\n".join(lines)).strip()
+    return normalise_citations("\n".join(lines)).strip()
+
+
+# A bracket nested inside a list of citations: "[S3, [S5], S12]". Removed, one level at a time.
+NESTED_CITATION = re.compile(r"\[([^\[\]\n]*)\[(S\d+)\]([^\[\]\n]*)\]")
+# A bracket holding only citation numbers and commas: "[S3, S5, S12]" -> one bracket per number.
+CITATION_GROUP = re.compile(r"\[([^\[\]\n]*S\d+[^\[\]\n]*)\]")
+
+
+def normalise_citations(text: str) -> str:
+    """Makes every citation one bracket per source: [S3, [S5], S12] -> [S3], [S5], [S12]."""
+    previous = None
+    while previous != text:                        # unwrap nested brackets, possibly several levels
+        previous = text
+        text = NESTED_CITATION.sub(r"[\1\2\3]", text)
+
+    def one_bracket_each(match: re.Match) -> str:
+        inner = match.group(1)
+        if not re.fullmatch(r"[\sS\d,]*", inner):  # not a citation list (e.g. "[S&P 500]") - leave it
+            return match.group(0)
+        return ", ".join(f"[{number}]" for number in re.findall(r"S\d+", inner))
+
+    text = CITATION_GROUP.sub(one_bracket_each, text)
+    return BARE_CITATION.sub(r"[S\1]", text)
 
 
 # --- Main entry point ------------------------------------------------------------

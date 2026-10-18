@@ -149,7 +149,7 @@ def test_prompt_puts_printed_figures_first_and_limits_working():
 @pytest.mark.parametrize("reply, expected", [
     ("Revenue rose 18% S2.", "Revenue rose 18% [S2]."),
     ("Revenue rose 18% [S2].", "Revenue rose 18% [S2]."),              # already bracketed: unchanged
-    ("Both are cited [S2, S4].", "Both are cited [S2, S4]."),          # a bracketed list: unchanged
+    ("Both are cited [S2, S4].", "Both are cited [S2], [S4]."),        # a list: one bracket per source
     ("Net income S4 and S5 agree.", "Net income [S4] and [S5] agree."),
     ("FY26S2 and S&P are not citations.", "FY26S2 and S&P are not citations."),
 ])
@@ -161,3 +161,14 @@ def test_bare_citations_become_bracketed(reply, expected):
 def test_prompt_asks_for_one_source_per_figure():
     assert "ONE source per figure" in prompts.ANSWER_QUESTION
     assert "never group several sources" in prompts.ANSWER_QUESTION
+
+
+@pytest.mark.parametrize("reply, expected", [
+    ("Net income [S3, [S5], S12].", "Net income [S3], [S5], [S12]."),          # nested bracket in a list
+    ("Revenue [S9, S11].", "Revenue [S9], [S11]."),
+    ("Revenue [S2].", "Revenue [S2]."),                                       # already right: unchanged
+    ("Ratio [S&P 500] is not a citation.", "Ratio [S&P 500] is not a citation."),
+])
+def test_citation_groups_get_one_bracket_per_source(reply, expected):
+    from query.answer import clean_reply
+    assert clean_reply(reply) == expected
