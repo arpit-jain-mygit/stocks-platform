@@ -16,7 +16,7 @@
 
 ## To do
 
-- [ ] **UI support** (Angular single page app in `ui/`, see `ui/README.md`)
+- [ ] **UI support** (Angular single page app in `ui/`, see `ui/README.md`; UX ideas: [UX.md](UX.md))
   - [x] Angular 22 app, router, Hello World home page, unit tests
   - [x] Chat window ("Ask a question"): question + company -> answer with cited sources (`POST /ask`)
   - [ ] Chat: keep the conversation across reloads; send earlier turns for follow-up questions
