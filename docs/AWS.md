@@ -30,6 +30,7 @@ Related: [README.md](README.md) · [features.md](features.md) · [UX.md](UX.md)
 | 2026-10-18 | `infra/` Terraform skeleton (versions, providers, variables, S3 backend); `terraform init`, `validate` and `plan` succeed | No resources yet: `main.tf` is intentionally empty |
 | 2026-10-18 | Six SecureString parameters under `/stocks-insights/`: APP_API_KEY, ADMIN_API_KEY, GEMINI_API_KEY, QDRANT_URL, QDRANT_API_KEY, DATABASE_URL | Entered by the owner in Terminal; values are not in git or chat. Verified by listing names and types |
 | 2026-10-18 | Terraform applied step 2.7: buckets `stocks-insights-frontend-552808407801`, `stocks-insights-uploads-552808407801` (30-day expiry on `uploads/`), `stocks-insights-cache-552808407801`; public access blocked, AES256 | 11 resources added. Applied from saved plan |
+| 2026-10-18 | Terraform applied step 2.8: DynamoDB table `stocks-insights-jobs` (pay per request, TTL on `expires_at`) | 1 resource added; status ACTIVE. Expiry not active until the app sets `expires_at` |
 
 ### Still to do
 
@@ -88,7 +89,7 @@ Branch: `aws-serverless`.
 - [x] **2.5 `infra/` folder:** `providers.tf`, `variables.tf`, `outputs.tf`, one module per component
 - [x] **2.6 Secrets:** SSM Parameter Store (SecureString) for `APP_API_KEY`, `ADMIN_API_KEY`, `GEMINI_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`, `DATABASE_URL`. Values are entered once, not written into Terraform files
 - [x] **2.7 Storage:** frontend, uploads and cache buckets created (11 resources) S3 buckets for the frontend, uploads and caches (private, encrypted, lifecycle rules on uploads)
-- [ ] **2.8 Metadata table:** (written and planned: 1 table to add, awaiting apply; expiry needs the app to set `expires_at` - add to step 1.2 follow-up) DynamoDB `jobs` table (on-demand billing)
+- [x] **2.8 Metadata table:** `stocks-insights-jobs` created (pay per request). Expiry still needs the app to set `expires_at` (follow-up to step 1.2) DynamoDB `jobs` table (on-demand billing)
 - [ ] **2.9 Backend:** ECR repository, Lambda function (container image, 2–3 GB memory, 5 min timeout), API Gateway HTTP API, IAM role with least privilege
 - [ ] **2.10 Frontend:** CloudFront distribution with origin access control to the frontend bucket
 - [ ] **2.11 API routing:** CloudFront behaviours for `/api/*` to API Gateway, allowing only `companies*`, `doc-types`, `documents*`, `ask`, `uploads`, `jobs/*`. The `X-API-Key` header is added as a CloudFront origin header
