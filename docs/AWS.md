@@ -20,22 +20,24 @@ Related: [README.md](README.md) · [features.md](features.md) · [UX.md](UX.md)
 | 2026-10-18 | Enabled IAM Identity Center as an **account instance** (not an organization), single region `ap-south-1` | Organization would have switched the account to pay-as-you-go and expired free-tier credits. Account instance can't be upgraded to an organization later |
 | 2026-10-18 | Created Identity Center user `stocks-insights-admin` | Invitation email sent to the owner's address |
 | 2026-10-18 | Set up MFA (authenticator app on phone) for `stocks-insights-admin` | MFA is required by the organisation's policy |
-| 2026-10-18 | Access portal URL noted: `https://d-9f675bd66a.awsapps.com/start` | Not a secret; used by `aws configure sso` |
+| 2026-10-18 | Access portal URL noted: `https://d-9f675bd66a.awsapps.com/start` | Not a secret |
+| 2026-10-18 | Found that the Identity Center account instance has no "Multi-account permissions" (permission sets), so it cannot grant CLI access to the account | Decided on option 2: an IAM user with an access key. The Identity Center user stays unused |
 
 ### Still to do
 
-- [ ] Create permission set `StocksInsightsDeploy` (for now `PowerUserAccess` + `IAMFullAccess`; narrow in Phase 5)
-- [ ] Assign `stocks-insights-admin` to this AWS account with that permission set
+- [ ] Create IAM user `stocks-insights-deploy` (IAM → Users → Create user), with no console access, and attach `PowerUserAccess` and `IAMFullAccess` for now (narrow in Phase 5)
+- [ ] Create an access key for the user (use case: Command Line Interface). Save the key and secret somewhere safe; the secret is shown only once
+- [ ] Configure the profile on your Mac: `aws configure --profile stocks-insights` (enter the key, the secret, region `ap-south-1`, output `json`)
 - [ ] Install Terraform: `brew install terraform`
-- [ ] Run `aws configure sso` and name the profile `stocks-insights`
 - [ ] Check with `aws sts get-caller-identity --profile stocks-insights`
+- [ ] Put a reminder in your calendar to rotate the access key in 90 days (IAM → Users → stocks-insights-deploy → Security credentials)
 
 ---
 
 ## 0. Decisions (answer before Phase 2)
 
 - [x] **IaC tool:** Terraform (chosen)
-- [x] **AWS login:** a new IAM Identity Center (SSO) user (account instance done; permission set and CLI login pending - see progress log) for this project, created by you in the console (steps below). Not the `matchanalyzer-cli` user, which belongs to another project
+- [x] **AWS login:** IAM user `stocks-insights-deploy` with an access key, used by the CLI and Terraform (option 2). Identity Center account instance does not assign AWS account access, so it is not used for the CLI for this project, created by you in the console (steps below). Not the `matchanalyzer-cli` user, which belongs to another project
 - [x] **Scope of first release:** API + frontend only, with ingestion still on Railway
 - [x] **Region:** `ap-south-1` (Mumbai)
 - [x] **Domain:** default CloudFront and API Gateway addresses for now (no domain cost). A custom domain can be added in section 4.2 later: roughly $10–15 a year for a standard domain (more for `.ai`), plus about $0.50 a month for a Route 53 hosted zone
