@@ -25,6 +25,8 @@ Related: [README.md](README.md) · [features.md](features.md) · [UX.md](UX.md)
 | 2026-10-18 | Terraform 1.16.6 installed to `~/bin` (Homebrew blocked by outdated Command Line Tools) | `terraform -version` works |
 | 2026-10-18 | Created IAM user `stocks-insights-deploy`, access key, profile `stocks-insights` (region `ap-south-1`, output `json`) | `aws sts get-caller-identity --profile stocks-insights` works |
 | 2026-10-18 | Phase 1 code complete on `aws-serverless`: storage (local/S3), job store (memory/DynamoDB), presigned uploads, Lambda handler (Mangum), Lambda Dockerfile, ECS worker and dispatch, env settings, 158 backend tests passing (AWS calls faked) | Not yet built or run on AWS. Dockerfile.lambda not built (no Docker locally) |
+| 2026-10-18 | Budget `stocks-insights-monthly`: $20/month, email alerts at 80% and 100% to the owner's address | Created with `aws budgets create-budget` |
+| 2026-10-18 | Terraform state: S3 bucket `stocks-insights-tfstate-552808407801` (ap-south-1, versioning on, public access blocked, AES256 encryption) and DynamoDB lock table `stocks-insights-tfstate-lock` (on-demand) | Created with the AWS CLI; they are the only resources so far |
 
 ### Still to do
 
@@ -78,8 +80,8 @@ Branch: `aws-serverless`.
 
 - [ ] **2.1 Install tools:** `brew install terraform` and `brew install awscli` (already installed)
 - [ ] **2.2 AWS login:** create the IAM user or SSO profile chosen in section 0, then `aws configure --profile stocks-insights`
-- [ ] **2.3 Budget alarm:** monthly budget with an email alert at 80% and 100%
-- [ ] **2.4 Remote state:** S3 bucket for Terraform state (versioning and encryption on) and a DynamoDB table for locks
+- [x] **2.3 Budget alarm:** monthly budget with an email alert at 80% and 100%
+- [x] **2.4 Remote state:** S3 bucket for Terraform state (versioning and encryption on) and a DynamoDB table for locks
 - [ ] **2.5 `infra/` folder:** `providers.tf`, `variables.tf`, `outputs.tf`, one module per component
 - [ ] **2.6 Secrets:** SSM Parameter Store (SecureString) for `APP_API_KEY`, `ADMIN_API_KEY`, `GEMINI_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`, `DATABASE_URL`. Values are entered once, not written into Terraform files
 - [ ] **2.7 Storage:** S3 buckets for the frontend, uploads and caches (private, encrypted, lifecycle rules on uploads)
