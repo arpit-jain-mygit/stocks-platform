@@ -146,6 +146,7 @@ uvicorn api.main:app --host 0.0.0.0 --port 8080
 | POST | `/ingest` | form: `file`, `company`, `period` (`Q3 FY25`), `doc_type`, `force` | `skipped`, or `queued` + `job_id` |
 | GET | `/jobs/{job_id}` | – | `queued` → `running` → `complete` / `skipped` / `failed` |
 | GET | `/companies` | `ingested` (true = only companies with a complete filing) | Known companies and their aliases |
+| GET | `/companies/{company}` | – | One company (codes, sector, FY end month, status, aliases) + its filings, newest first; 404 if unknown |
 | GET | `/doc-types` | – | Allowed document types + default |
 | GET | `/documents` | optional `?company=` `&doc_type=` | Every ingested PDF and its status |
 | GET | `/documents/{doc_id}` | – | One PDF's record |

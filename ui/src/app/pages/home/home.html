@@ -16,14 +16,16 @@
       <button type="button" (click)="load()">Try again</button>
     } @else {
       @for (company of companies(); track company.company_id) {
-        <article class="company">
+        <!-- The whole card is a link to the company's page (/companies/<code>). -->
+        <a class="company" [routerLink]="['/companies', company.company_id]">
           <h3>{{ company.name }}</h3>
           <dl>
             @if (company.nse_symbol) { <div><dt>NSE</dt><dd>{{ company.nse_symbol }}</dd></div> }
             @if (company.bse_code) { <div><dt>BSE</dt><dd>{{ company.bse_code }}</dd></div> }
             @if (company.isin) { <div><dt>ISIN</dt><dd>{{ company.isin }}</dd></div> }
           </dl>
-        </article>
+          <span class="open" aria-hidden="true">View filings &rarr;</span>
+        </a>
       } @empty {
         <p class="status">No companies with ingested filings yet.</p>
       }

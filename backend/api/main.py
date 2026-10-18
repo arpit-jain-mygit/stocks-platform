@@ -6,6 +6,7 @@ Endpoints:
   POST /ingest                 upload a PDF (+ company, period) -> starts ingestion
   GET  /jobs/{job_id}          progress of one ingestion
   GET  /companies              companies the app knows (Postgres); ?ingested=true = only those with data
+  GET  /companies/{company}    one company (all its details) + its filings, newest first
   GET  /doc-types              allowed document types (Postgres)
   GET  /documents              every ingested PDF and its status (optional ?company=&doc_type=)
   GET  /documents/{doc_id}     one PDF's record
@@ -51,7 +52,7 @@ from ingest import store
 from ingest.pipeline import check_existing, describe, ingest_pdf
 from query.answer import answer
 from query.search import build_filters
-from utils.companies import load_companies
+from utils.companies import find_company, load_companies
 from utils.doc_types import load_doc_types
 
 # --- Settings ----------------------------------------------------------------
@@ -185,6 +186,19 @@ def companies(ingested: bool = False) -> list[dict]:
         with_data = {f["company_id"] for f in store.list_documents() if f.get("status") == "complete"}
         found = [c for c in found if c.company_id in with_data]
     return [asdict(c) for c in found]
+
+
+@app.get("/companies/{company}", dependencies=[Depends(require_api_key)])
+def company_detail(company: str) -> dict:
+    """
+    One company: every stored detail (codes, sector, status, aliases ...) plus
+    "filings" = its ingested PDFs, newest first. company = ID, code, name or alias.
+    """
+    found = find_company(company)
+    if found is None:
+        raise HTTPException(status_code=404, detail=f"No company {company!r}")
+    filings = [f for f in store.list_documents() if f["company_id"] == found.company_id]
+    return {**asdict(found), "filings": filings}
 
 
 @app.get("/doc-types", dependencies=[Depends(require_api_key)])

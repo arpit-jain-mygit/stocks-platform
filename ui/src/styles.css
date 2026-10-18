@@ -8,6 +8,9 @@
   --border: #dadce0;
   --surface: #f8f9fa;
   --danger: #c5221f;
+  --accent: #1a73e8;
+  --ok: #188038;
+  --warn: #b06000;
   color-scheme: light dark;
 }
 
@@ -19,6 +22,9 @@
     --border: #3c4043;
     --surface: #1e1f20;
     --danger: #f28b82;
+    --accent: #8ab4f8;
+    --ok: #81c995;
+    --warn: #fdd663;
   }
 }
 

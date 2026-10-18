@@ -1,18 +1,17 @@
 // app.spec.ts - Unit tests for the root component and the routes (run with: npm test).
 
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { App } from './app';
-import { routes } from './app.routes';
+import { appConfig } from './app.config';
 
 describe('App', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()],
+      // The app's real setup (router + its options, HttpClient), with a fake backend on top.
+      providers: [...appConfig.providers, provideHttpClientTesting()],
     });
   });
 
@@ -23,6 +22,11 @@ describe('App', () => {
   it('shows the home page at "/"', async () => {
     const harness = await RouterTestingHarness.create('/');
     expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain('Stocks Platform');
+  });
+
+  it('shows the company page at "/companies/:id"', async () => {
+    const harness = await RouterTestingHarness.create('/companies/OFSS');
+    expect(harness.routeNativeElement?.textContent).toContain('All companies');   // the page's back link
   });
 
   it('sends unknown URLs to the home page', async () => {

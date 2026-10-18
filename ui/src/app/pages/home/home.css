@@ -22,13 +22,34 @@ h2 {
   font-size: 1.1rem;
 }
 
-/* One card per company. */
+/* One card per company; the whole card is a link. */
 .company {
+  display: block;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 12px;
   background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+
+.company:hover,
+.company:focus-visible {
+  border-color: var(--accent);
+}
+
+.company:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.open {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 0.875rem;
+  color: var(--accent);
 }
 
 .company h3 {

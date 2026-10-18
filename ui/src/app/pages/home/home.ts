@@ -1,11 +1,13 @@
 // home.ts - The home page, shown at "/" (see app.routes.ts).
-// Lists the companies that have ingested filings, loaded from the backend.
+// Lists the companies that have ingested filings as cards; a card opens that company's page.
 
 import { Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Company, StocksApi } from '../../services/stocks-api';
 
 @Component({
   selector: 'app-home',
+  imports: [RouterLink],         // [routerLink] on the cards
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

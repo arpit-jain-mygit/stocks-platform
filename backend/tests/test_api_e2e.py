@@ -58,6 +58,18 @@ def test_companies_ingested_filter_lists_only_companies_with_data(client, make_p
     assert len(client.get("/companies").json()) == 2                               # default: every company
 
 
+def test_company_detail_has_every_field_and_its_filings(client, make_pdf, ingest):
+    _, body = ingest(make_pdf(), name="q3.pdf")
+    ingest(make_pdf(), company="OFSS", period="FY26", doc_type="annual_report")      # another company's filing
+    detail = client.get("/companies/Videocon").json()                                # alias works
+    assert detail["company_id"] == "VIDEOIND" and "Videocon" in detail["aliases"]
+    assert {"nse_symbol", "bse_code", "cin", "isin", "sector", "fy_end_month", "status"} <= detail.keys()
+    [filing] = detail["filings"]                                                     # only its own filings
+    assert filing["doc_id"] == body["doc_id"] and filing["file_name"] == "q3.pdf" and filing["status"] == "complete"
+    assert {"period", "doc_type", "pages", "chunks", "created_at", "updated_at"} <= filing.keys()
+    assert client.get("/companies/NOPE").status_code == 404
+
+
 # =====================================================================================
 # 2. Ingestion
 # =====================================================================================

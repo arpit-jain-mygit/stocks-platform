@@ -21,7 +21,8 @@ CACHE_SECONDS = 60
 COMPANIES_SQL = """
     SELECT c.code, c.name, COALESCE(c.nse_symbol, ''), COALESCE(c.bse_code, ''), COALESCE(c.cin, ''),
            COALESCE(c.isin, ''),
-           COALESCE(array_agg(a.alias::text ORDER BY a.alias) FILTER (WHERE a.alias IS NOT NULL), '{}')
+           COALESCE(array_agg(a.alias::text ORDER BY a.alias) FILTER (WHERE a.alias IS NOT NULL), '{}'),
+           COALESCE(c.sector, ''), c.fy_end_month, c.status
     FROM companies c
     LEFT JOIN company_aliases a ON a.company_id = c.id
     GROUP BY c.id
@@ -38,11 +39,12 @@ FILING_COLUMNS = {
 }
 FILING_SELECT = """
     SELECT f.doc_id, f.file_name, c.code, c.name, f.doc_type, f.fiscal_year, f.quarter, f.period_end,
-           f.period_label, f.status, f.pages, f.ocr_pages, f.chunks, f.error, f.superseded_by, f.updated_at
+           f.period_label, f.status, f.pages, f.ocr_pages, f.chunks, f.error, f.superseded_by, f.created_at,
+           f.updated_at
     FROM filings f JOIN companies c ON c.id = f.company_id
 """
 FILING_KEYS = ["doc_id", "file_name", "company_id", "company", "doc_type", "fiscal_year", "quarter", "period_end",
-               "period", "status", "pages", "ocr_pages", "chunks", "error", "superseded_by", "updated_at"]
+               "period", "status", "pages", "ocr_pages", "chunks", "error", "superseded_by", "created_at", "updated_at"]
 
 
 # Columns copied as-is by backups (ids are never copied; links go by company code).
@@ -56,6 +58,7 @@ def filing_dict(row) -> dict:
     """One SELECT row -> the plain record dict (dates as ISO strings, so it is JSON-ready)."""
     record = dict(zip(FILING_KEYS, row))
     record["period_end"] = record["period_end"].isoformat()
+    record["created_at"] = record["created_at"].isoformat()
     record["updated_at"] = record["updated_at"].isoformat()
     record["ocr_pages"] = list(record["ocr_pages"] or [])
     return record
@@ -91,8 +94,9 @@ class PostgresMetadataStore(MetadataStore):
         def load():
             with self.connect() as conn:
                 rows = conn.execute(COMPANIES_SQL).fetchall()
-            return [Company(code, name, nse, bse, cin, isin, tuple(aliases))
-                    for code, name, nse, bse, cin, isin, aliases in rows]
+            return [Company(company_id=code, name=name, nse_symbol=nse, bse_code=bse, cin=cin, isin=isin,
+                            aliases=tuple(aliases), sector=sector, fy_end_month=fy_end, status=status)
+                    for code, name, nse, bse, cin, isin, aliases, sector, fy_end, status in rows]
         return self._cached("companies", load)
 
     def doc_types(self) -> dict:

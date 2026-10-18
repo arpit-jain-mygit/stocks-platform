@@ -3,8 +3,10 @@
 
 import { Routes } from '@angular/router';
 import { Home } from './pages/home/home';
+import { CompanyPage } from './pages/company/company';
 
 export const routes: Routes = [
-  { path: '', component: Home, title: 'Stocks Platform' },   // "/" -> home page (title = browser tab)
-  { path: '**', redirectTo: '' },                             // any unknown URL -> home page
+  { path: '', component: Home, title: 'Stocks Platform' },                       // "/" -> company cards
+  { path: 'companies/:id', component: CompanyPage, title: 'Company - Stocks Platform' },   // one company
+  { path: '**', redirectTo: '' },                                                  // unknown URL -> home
 ];

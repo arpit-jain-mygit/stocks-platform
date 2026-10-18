@@ -1,7 +1,7 @@
 # ui - Stocks Platform web app (Angular single page app)
 
-The browser app for stocks-platform. Today: a home page listing the companies that have ingested
-filings. Next: ask questions (see "UI support" in [../docs/features.md](../docs/features.md)).
+The browser app for stocks-platform. Today: a home page with a card per company that has ingested
+filings; a card opens that company's page (details, aliases, filings). Next: ask questions (see "UI support" in [../docs/features.md](../docs/features.md)).
 
 Angular 22, standalone components, router, plain CSS, no server-side rendering (a pure SPA: Vercel serves
 static files). Generated with `ng new` (Angular CLI 22.2.3).
@@ -13,10 +13,11 @@ static files). Generated with `ng new` (Angular CLI 22.2.3).
 | `src/index.html` | The one HTML page; Angular draws everything inside `<app-root>` |
 | `src/main.ts` | Starts the app |
 | `src/app/app.ts` / `app.html` | Root frame: only `<router-outlet>`, where the current page goes |
-| `src/app/app.routes.ts` | URL -> page (`/` = home, anything else -> home) |
+| `src/app/app.routes.ts` | URL -> page (`/` = home, `/companies/<code>` = company page, anything else -> home) |
 | `src/app/app.config.ts` | App-wide providers (router, error listener) |
 | `src/app/services/stocks-api.ts` | The only code that calls the backend (`/api/...`) |
-| `src/app/pages/home/` | Home page: companies list. `home.ts` (logic), `home.html` (markup), `home.css` (styles), `home.spec.ts` (tests) |
+| `src/app/pages/company/` | Company page: details, aliases, filings (`GET /api/companies/<code>` + `/api/doc-types`) |
+| `src/app/pages/home/` | Home page: company cards. `home.ts` (logic), `home.html` (markup), `home.css` (styles), `home.spec.ts` (tests) |
 | `proxy.conf.mjs` | Local dev: forwards `/api/...` to the backend and adds `X-API-Key` |
 | `api/proxy.ts` | Vercel server function: same job in production, only for allowed endpoints |
 | `src/styles.css` | Global styles + light / dark colour tokens |
@@ -31,7 +32,7 @@ browser --/api/companies--> proxy (adds X-API-Key) --/companies--> backend (Fast
 
 The browser never sees `APP_API_KEY`: everything in Angular code is downloadable by any visitor. The proxy
 is `proxy.conf.mjs` locally and `api/proxy.ts` on Vercel. `api/proxy.ts` forwards only
-`GET companies / doc-types / documents` and `POST ask` - the risky delete and backup APIs are unreachable
+`GET companies`, `GET companies/<code>`, `GET doc-types`, `GET documents` and `POST ask` - the risky delete and backup APIs are unreachable
 from the UI even if they are switched on.
 
 ## Run (from `ui/`)

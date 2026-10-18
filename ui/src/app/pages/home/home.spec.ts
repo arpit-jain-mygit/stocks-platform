@@ -4,19 +4,20 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { Home } from './home';
 import { Company } from '../../services/stocks-api';
 
 const OFSS: Company = {
   company_id: 'OFSS', name: 'Oracle Financial Services Software Ltd', nse_symbol: 'OFSS',
-  bse_code: '532466', cin: '', isin: 'INE881D01027', aliases: [],
+  bse_code: '532466', cin: '', isin: 'INE881D01027', aliases: [], sector: '', fy_end_month: 3, status: 'active',
 };
 
 describe('Home', () => {
   let backend: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] });
     backend = TestBed.inject(HttpTestingController);
   });
 
@@ -35,7 +36,9 @@ describe('Home', () => {
     request.flush([OFSS]);
     await fixture.whenStable();
     expect(page.querySelector('h1')?.textContent).toContain('Stocks Platform');
-    expect(page.querySelectorAll('article.company').length).toBe(1);
+    const cards = page.querySelectorAll<HTMLAnchorElement>('a.company');
+    expect(cards.length).toBe(1);
+    expect(cards[0].getAttribute('href')).toBe('/companies/OFSS');      // the card opens the company page
     expect(page.textContent).toContain('Oracle Financial Services Software Ltd');
     expect(page.textContent).toContain('532466');
   });

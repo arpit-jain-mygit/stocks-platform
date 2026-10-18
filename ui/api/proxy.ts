@@ -12,13 +12,19 @@
 
 // --- Which calls the UI may make: "METHOD path" ------------------------------------------
 const ALLOWED = new Set(['GET companies', 'GET doc-types', 'GET documents', 'POST ask']);
+// Plus one company's page: GET companies/<code> (starts with a letter or digit; then letters, digits, . _ -).
+const COMPANY_PAGE = /^GET companies\/[A-Za-z0-9][A-Za-z0-9._-]{0,39}$/;
+
+function isAllowed(method: string, path: string): boolean {
+  return ALLOWED.has(`${method} ${path}`) || COMPANY_PAGE.test(`${method} ${path}`);
+}
 
 // --- Forward one request -----------------------------------------------------------------
 export async function forward(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const path = (url.searchParams.get('path') ?? '').replace(/^\/+|\/+$/g, '');
 
-  if (!ALLOWED.has(`${request.method} ${path}`)) {
+  if (!isAllowed(request.method, path)) {
     return Response.json({ detail: 'Not available' }, { status: 404 });
   }
   const backend = process.env.STOCKS_API_URL;

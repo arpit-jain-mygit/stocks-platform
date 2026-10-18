@@ -23,6 +23,9 @@ class Company:
     cin: str = ""
     isin: str = ""
     aliases: tuple[str, ...] = field(default_factory=tuple)
+    sector: str = ""                # e.g. "IT services" (optional)
+    fy_end_month: int = 3           # month the financial year ends (3 = March, the Indian default)
+    status: str = "active"          # active / suspended / delisted / insolvency
 
     def names(self) -> list[str]:
         """Every string that identifies this company (ID, codes, name, aliases)."""
@@ -49,7 +52,7 @@ class MetadataStore:
     #   doc_id, file_name, company_id (code), company (name), doc_type,
     #   fiscal_year, quarter, period_end ("YYYY-MM-DD"), period (label),
     #   status (processing / complete / failed / superseded), pages, ocr_pages,
-    #   chunks, error, superseded_by, updated_at (ISO time)
+    #   chunks, error, superseded_by, created_at, updated_at (ISO times)
 
     def get_filing(self, doc_id: str) -> dict | None:
         """One filing record, or None if this PDF was never seen."""

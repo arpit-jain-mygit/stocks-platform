@@ -1,0 +1,153 @@
+/* company.css - Styles for the company page only. */
+
+/* Page column: centred, readable width, 16px side margin on phones. */
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.back:hover {
+  text-decoration: underline;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 24px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+h2 {
+  margin: 28px 0 10px;
+  font-size: 1.05rem;
+}
+
+h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Label / value pairs in a responsive grid: 1 column on phones, more on wider screens. */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+
+dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+dd {
+  margin: 2px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+}
+
+/* Long file names break instead of widening the page. */
+.wrap {
+  overflow-wrap: anywhere;
+}
+
+/* Aliases as small rounded chips. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.875rem;
+}
+
+/* One card per filing. */
+.filing {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: var(--surface);
+}
+
+.filing-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* Status badge; colour depends on the status value. */
+.badge {
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+  color: var(--muted);
+}
+
+.badge[data-status='complete'],
+.badge[data-status='active'] {
+  color: var(--ok);
+}
+
+.badge[data-status='processing'],
+.badge[data-status='superseded'],
+.badge[data-status='suspended'] {
+  color: var(--warn);
+}
+
+.badge[data-status='failed'],
+.badge[data-status='insolvency'],
+.badge[data-status='delisted'] {
+  color: var(--danger);
+}
+
+.status {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--danger);
+}
+
+button {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}

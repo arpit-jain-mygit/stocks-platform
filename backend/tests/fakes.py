@@ -171,8 +171,10 @@ class FakeMetadataStore(MetadataStore):
         return copy.deepcopy(record) if record else None
 
     def save_filing(self, doc_id: str, fields: dict) -> None:
-        record = self.filings.setdefault(doc_id, {"doc_id": doc_id, "superseded_by": None, "error": None})
-        record.update(fields, updated_at=next(self._clock))
+        tick = next(self._clock)
+        record = self.filings.setdefault(doc_id, {"doc_id": doc_id, "superseded_by": None, "error": None,
+                                                  "created_at": tick})
+        record.update(fields, updated_at=tick)
         # Same rule as Postgres: a new complete filing supersedes the old one
         # for the same company + doc type + period.
         if fields.get("status") == "complete":
