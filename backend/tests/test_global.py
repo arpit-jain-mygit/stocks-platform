@@ -127,7 +127,7 @@ def test_answer_prompt_forbids_investment_advice_with_the_exact_reply():
 # =====================================================================================
 @pytest.mark.parametrize("reply, expected", [
     ("Revenue rose 18% [S2].\n\n* S2 cdn.xlsx, sheet 'Segment Results', rows 3-28\n* S4 deck.pdf, page 4", "Revenue rose 18% [S2]."),
-    ("S2 says revenue rose 18%.", "S2 says revenue rose 18%."),        # an answer, not a source list: kept
+    ("S2 says revenue rose 18%.", "[S2] says revenue rose 18%."),      # an answer, not a source list: kept (citation bracketed)
     ("Revenue rose 18% [S2].\nS4 Microsoft-SlidesFY26Q1.pdf, page 4", "Revenue rose 18% [S2]."),
 ])
 def test_trailing_source_list_is_removed_but_answers_are_kept(reply, expected):
@@ -144,3 +144,15 @@ def test_prompt_puts_printed_figures_first_and_limits_working():
     assert "Never calculate a figure that is printed" in prompts.ANSWER_QUESTION
     assert "at most 15 words" in prompts.ANSWER_QUESTION
     assert "including prior-year and comparison figures" in prompts.ANSWER_QUESTION
+
+
+@pytest.mark.parametrize("reply, expected", [
+    ("Revenue rose 18% S2.", "Revenue rose 18% [S2]."),
+    ("Revenue rose 18% [S2].", "Revenue rose 18% [S2]."),              # already bracketed: unchanged
+    ("Both are cited [S2, S4].", "Both are cited [S2, S4]."),          # a bracketed list: unchanged
+    ("Net income S4 and S5 agree.", "Net income [S4] and [S5] agree."),
+    ("FY26S2 and S&P are not citations.", "FY26S2 and S&P are not citations."),
+])
+def test_bare_citations_become_bracketed(reply, expected):
+    from query.answer import clean_reply
+    assert clean_reply(reply) == expected

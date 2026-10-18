@@ -61,12 +61,20 @@ SOURCE_LINE = re.compile(
     re.IGNORECASE)
 
 
+# A citation written as a bare S2 (not in brackets). Not after a letter or "[", not before "]" or a letter.
+BARE_CITATION = re.compile(r"(?<![\w\[])S(\d+)(?![\w\]])")
+
+
 def clean_reply(reply: str) -> str:
-    """Removes a trailing list of sources (one line per source) from the model's answer."""
+    """
+    Tidies the model's answer:
+      - removes a trailing list of sources (one line per source)
+      - turns a bare citation "S2" into the bracketed "[S2]" the chat shows as a tag
+    """
     lines = reply.rstrip().split("\n")
     while lines and (not lines[-1].strip() or SOURCE_LINE.match(lines[-1])):
         lines.pop()
-    return "\n".join(lines).strip()
+    return BARE_CITATION.sub(r"[S\1]", "\n".join(lines)).strip()
 
 
 # --- Main entry point ------------------------------------------------------------
