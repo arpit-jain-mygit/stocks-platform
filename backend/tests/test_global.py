@@ -143,7 +143,7 @@ def test_prompt_asks_for_bracketed_citations_and_no_source_list():
 def test_prompt_puts_printed_figures_first_and_limits_working():
     assert "Never calculate a figure that is printed" in prompts.ANSWER_QUESTION
     assert "at most 15 words" in prompts.ANSWER_QUESTION
-    assert "including prior-year and comparison figures" in prompts.ANSWER_QUESTION
+    assert "Prior-year and comparison figures need their own citation" in prompts.ANSWER_QUESTION
 
 
 @pytest.mark.parametrize("reply, expected", [
@@ -156,3 +156,8 @@ def test_prompt_puts_printed_figures_first_and_limits_working():
 def test_bare_citations_become_bracketed(reply, expected):
     from query.answer import clean_reply
     assert clean_reply(reply) == expected
+
+
+def test_prompt_asks_for_one_source_per_figure():
+    assert "ONE source per figure" in prompts.ANSWER_QUESTION
+    assert "never group several sources" in prompts.ANSWER_QUESTION
