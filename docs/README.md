@@ -479,3 +479,12 @@ Postgres are not). Every push to `main` that touches `backend/` redeploys; run `
 | `{"detail":"Not Found"}` in the browser | Use `/docs`; `/ask` only accepts POST |
 | Postgres connection times out / `Network is unreachable` | Use the Supabase **Session pooler** URI (direct connection is IPv6-only) |
 | `relation "companies" does not exist` | Run `python db/migrate.py` |
+| Railway: `Application not found` (404) | No domain on the service yet: Settings → Networking → Public Networking → Generate Domain, then use that URL |
+| Railway: `Internal Server Error` (500) | Read the Railway logs (below); the last line of the traceback names the cause |
+
+### Checking Railway logs
+
+1. Click the service card, open the **Deployments** tab, click the active deployment (the green one), then open **Deploy Logs**. The error appears there at the moment you run the curl.
+2. Or use the left sidebar of the project and open **Observability** (Logs), which lets you search all logs. Try searching for `Traceback` or `error`.
+
+Build problems are in the deployment's **Build Logs**; migration problems in its **Pre-deploy** step.
