@@ -488,3 +488,26 @@ Postgres are not). Every push to `main` that touches `backend/` redeploys; run `
 2. Or use the left sidebar of the project and open **Observability** (Logs), which lets you search all logs. Try searching for `Traceback` or `error`.
 
 Build problems are in the deployment's **Build Logs**; migration problems in its **Pre-deploy** step.
+
+### Looking inside the Railway container (SSH)
+
+Use it to check files on the volume, e.g. that the caches survive a redeploy.
+
+1. Install and log in to the Railway CLI (once):
+   ```bash
+   brew install railway
+   ```
+   ```bash
+   railway login
+   ```
+2. Right-click the service card (or its **⋮** menu) → **Copy SSH Command**, paste it in your terminal
+   (`railway ssh --project=… --environment=… --service=…`). You are now inside the running container.
+3. Look at the caches:
+   ```bash
+   ls -la /data/cache
+   ```
+   Expect one folder per `doc_id` plus `vectors/`. Missing or empty = nothing ingested on Railway yet
+   (the folder is created by the first ingestion). Leave with `exit`.
+
+The Railway cache is separate from your local `data/cache`: a `force=true` re-ingest on Railway calls the
+vision and embedding models again. Run big forced re-ingests locally, where the cache already exists.
