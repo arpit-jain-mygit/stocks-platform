@@ -1,0 +1,7 @@
+# Terraform local files: never commit state, plans or provider downloads.
+.terraform/
+.terraform.lock.hcl.bak
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
