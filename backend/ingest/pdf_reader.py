@@ -39,8 +39,6 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-import pymupdf
-
 from utils import ocr, page_cache, prompts
 from utils.llm import LLMBlocked, RecitationBlocked, get_llm, role_settings
 from ingest.ids import doc_id_from_bytes
@@ -90,7 +88,7 @@ class PageResult:
 
 
 # --- Decide: text page or scanned page? ----------------------------------------
-def has_text_layer(page: pymupdf.Page) -> bool:
+def has_text_layer(page: "pymupdf.Page") -> bool:
     """True if PyMuPDF can read enough real text from this page."""
     return len(page.get_text().strip()) >= MIN_TEXT_CHARS
 
@@ -104,14 +102,14 @@ def is_table_page(text: str) -> bool:
 
 
 # --- Render a page to an image ---------------------------------------------------
-def page_to_png(page: pymupdf.Page, dpi: int = RENDER_DPI) -> bytes:
+def page_to_png(page: "pymupdf.Page", dpi: int = RENDER_DPI) -> bytes:
     """Draws the page as a PNG picture and returns the image bytes."""
     pixmap = page.get_pixmap(dpi=dpi)
     return pixmap.tobytes("png")
 
 
 # --- Read one scanned page ---------------------------------------------------------
-def read_scanned_page(page: pymupdf.Page, doc_id: str, page_no: int, use_cache: bool,
+def read_scanned_page(page: "pymupdf.Page", doc_id: str, page_no: int, use_cache: bool,
                       text_layer: str | None = None) -> PageResult:
     """
     Reads one page from its image, cheapest option first:
@@ -156,7 +154,7 @@ def read_scanned_page(page: pymupdf.Page, doc_id: str, page_no: int, use_cache: 
         return PageResult(page_no, "", "failed", error=str(blocked))
 
 
-def ocr_fallback(page: pymupdf.Page, doc_id: str, page_no: int, refused: Exception) -> PageResult:
+def ocr_fallback(page: "pymupdf.Page", doc_id: str, page_no: int, refused: Exception) -> PageResult:
     """A scanned page the vision model refused (RECITATION) -> local OCR."""
     print(f"page {page_no}:   refused (RECITATION) -> local OCR")
     try:
@@ -191,6 +189,9 @@ def read_pdf(
     """
     doc_id = doc_id_from_bytes(pdf_bytes)
     results: list[PageResult] = []
+
+    # Imported here, not at the top: the Lambda API never reads PDFs and does not ship pymupdf.
+    import pymupdf
 
     # Open the PDF straight from memory - no temp file needed.
     with pymupdf.open(stream=pdf_bytes, filetype="pdf") as doc:

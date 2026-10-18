@@ -13,10 +13,6 @@ read directly. A slide with little text that holds a picture goes to the vision 
 # page_cache, prompts: cache for picture slides; the transcription prompt.
 import io
 
-import pymupdf
-from pptx import Presentation
-from pptx.enum.shapes import MSO_SHAPE_TYPE
-
 from ingest.formats.base import DocumentReader
 from ingest.formats.common import cell_text, check_office_zip, markdown_table
 from ingest.pdf_reader import MIN_TEXT_CHARS, PageResult
@@ -35,6 +31,9 @@ class PptxReader(DocumentReader):
         check_office_zip(data, ".pptx")
 
     def read(self, data: bytes, doc_id: str, use_cache: bool):
+        from pptx import Presentation  # lazy: only the Lambda-excluded ingest path needs it
+        from pptx.enum.shapes import MSO_SHAPE_TYPE
+
         deck = Presentation(io.BytesIO(data))
         pages = []
         for number, slide in enumerate(deck.slides, start=1):
@@ -69,6 +68,7 @@ class PptxReader(DocumentReader):
                 print(f"slide {number}: picture -> cache")
                 return PageResult(number, _join(prefix, cached), "vision")
         print(f"slide {number}: picture -> vision model")
+        import pymupdf  # lazy: only slides with pictures need it
         try:
             png = pymupdf.Pixmap(shape.image.blob).tobytes("png")
             markdown = get_llm("vision").describe_image(png, prompts.TRANSCRIBE_PAGE)

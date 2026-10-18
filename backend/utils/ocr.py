@@ -19,10 +19,8 @@ PyMuPDF talks to it directly, so no extra Python package is needed.
 
 # --- Imports -----------------------------------------------------------------
 # os:      reads the optional TESSDATA_PREFIX / OCR_LANGUAGE settings.
-# pymupdf: renders the page and hands it to Tesseract.
+# pymupdf: renders the page and hands it to Tesseract (imported where used, see tessdata_dir).
 import os
-
-import pymupdf
 
 # --- Settings ----------------------------------------------------------------
 # Tesseract reads small print best at around 300 DPI.
@@ -39,6 +37,7 @@ def tessdata_dir() -> str | None:
     isn't installed. Uses TESSDATA_PREFIX if set, otherwise asks PyMuPDF
     to find it.
     """
+    import pymupdf  # lazy: only the PDF path needs it
     try:
         return os.getenv("TESSDATA_PREFIX") or pymupdf.get_tessdata()
     except RuntimeError:
@@ -46,7 +45,7 @@ def tessdata_dir() -> str | None:
 
 
 # --- OCR one page --------------------------------------------------------------
-def ocr_page(page: pymupdf.Page, dpi: int = OCR_DPI) -> str:
+def ocr_page(page: "pymupdf.Page", dpi: int = OCR_DPI) -> str:
     """
     Reads a scanned page with Tesseract and returns its plain text.
     Raises RuntimeError if Tesseract is not installed.

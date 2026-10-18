@@ -19,10 +19,16 @@ OUT="dist/stocks-insights-api.zip"
 
 rm -rf "$BUILD_DIR" && mkdir -p "$BUILD_DIR" dist
 
+# The Lambda API never reads files (ingestion runs in the ECS worker), so the libraries used only
+# for reading PDFs, slides, Word and Excel files, plus the uvicorn server (Lambda uses Mangum), are
+# left out. They stay in requirements.txt for local runs and the worker image.
+API_REQUIREMENTS="build/lambda-requirements.txt"
+grep -viE '^(pymupdf|python-pptx|python-docx|openpyxl|uvicorn)' requirements.txt > "$API_REQUIREMENTS"
+
 # Step 1: packages for Lambda (arm64, Linux). --only-binary refuses anything that would need compiling.
 ../.venv/bin/python -m pip install --quiet --upgrade \
   "${PLATFORMS[@]}" --implementation cp --python-version "$PYTHON_VERSION" \
-  --only-binary=:all: --target "$BUILD_DIR" -r requirements.txt
+  --only-binary=:all: --target "$BUILD_DIR" -r "$API_REQUIREMENTS"
 
 # Step 2: the backend code (the same folders the Docker image would copy).
 for folder in api ingest query utils ops db eval; do
@@ -31,7 +37,7 @@ done
 find "$BUILD_DIR" -name "__pycache__" -type d -prune -exec rm -rf {} +
 find "$BUILD_DIR" -name "tests" -type d -prune -exec rm -rf {} +
 # The Lambda Python runtime already includes boto3, botocore, s3transfer and jmespath, so they
-# are left out of the zip (about 35 MB saved, which keeps the build under the 250 MB limit).
+# are left out of the zip (about 35 MB saved).
 rm -rf "$BUILD_DIR"/boto3 "$BUILD_DIR"/boto3-* "$BUILD_DIR"/botocore "$BUILD_DIR"/botocore-* \
        "$BUILD_DIR"/s3transfer "$BUILD_DIR"/s3transfer-* "$BUILD_DIR"/jmespath "$BUILD_DIR"/jmespath-*
 

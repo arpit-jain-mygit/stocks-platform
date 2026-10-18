@@ -9,8 +9,6 @@ sheet's first non-empty row is its header. Stored formula values are used, not r
 # DocumentReader, check_office_zip, cell_text, table_pages: shared pieces.
 import io
 
-import openpyxl
-
 from ingest.formats.base import DocumentReader
 from ingest.formats.common import cell_text, check_office_zip, table_pages
 
@@ -23,6 +21,7 @@ class XlsxReader(DocumentReader):
         check_office_zip(data, ".xlsx")
 
     def read(self, data: bytes, doc_id: str, use_cache: bool):
+        import openpyxl  # lazy: only spreadsheets need it
         workbook = openpyxl.load_workbook(io.BytesIO(data), data_only=True, read_only=True)
         pages = []
         for sheet in workbook.worksheets:

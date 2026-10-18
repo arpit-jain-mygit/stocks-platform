@@ -9,10 +9,6 @@ into pages (Word has no fixed pages).
 # DocumentReader, check_office_zip, cell_text, markdown_table, group_into_pages: shared pieces.
 import io
 
-from docx import Document as WordDocument
-from docx.table import Table
-from docx.text.paragraph import Paragraph
-
 from ingest.formats.base import DocumentReader
 from ingest.formats.common import cell_text, check_office_zip, group_into_pages, markdown_table
 
@@ -25,6 +21,10 @@ class DocxReader(DocumentReader):
         check_office_zip(data, ".docx")
 
     def read(self, data: bytes, doc_id: str, use_cache: bool):
+        from docx import Document as WordDocument  # lazy: only Word files need python-docx
+        from docx.table import Table
+        from docx.text.paragraph import Paragraph
+
         document = WordDocument(io.BytesIO(data))
         blocks = []
         for element in document.element.body.iterchildren():
