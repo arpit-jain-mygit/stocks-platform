@@ -13,7 +13,9 @@ Why this file exists:
 # TRANSCRIBE, don't summarize - every word and number must survive exactly.
 # Rules 1-3 exist because an earlier run "tidied up" the text: it swapped
 # NCLT/NCLAT, dropped words and a heading, and renumbered notes (ii) -> g).
-TRANSCRIBE_PAGE = """You are transcribing one page of an Indian company's financial results filing.
+# Written for any company and market (English filings).
+TRANSCRIBE_PAGE = """You are transcribing one page of a listed company's financial filing
+(results, annual report or similar).
 Your output is used as legal and financial evidence, so it must match the page exactly.
 
 Return ONLY the page content as GitHub-flavoured Markdown. Rules:
@@ -21,14 +23,15 @@ Return ONLY the page content as GitHub-flavoured Markdown. Rules:
    "fix" or make consistent anything - not typos, not grammar, not names, not
    capitalisation - even if the page seems wrong or contradicts itself.
    Look-alike abbreviations must be copied letter for letter as printed on
-   THIS page (e.g. NCLT vs NCLAT, CoC vs COC, RP vs IRP).
+   THIS page (e.g. NCLT vs NCLAT, IFRS vs IAS, 10-K vs 10-Q).
 2. Do NOT leave anything out: every heading, sub-heading, sentence and word,
    including repeated or standard boilerplate wording. Do not summarise.
 3. Keep every list, note and paragraph label exactly as printed - (i), (ii),
    a), b), iv.), 5. - never renumber, re-letter or convert them, and keep
    label-only headings such as "(i) Background of the Insolvency Proceedings".
-4. Copy every number exactly as printed, including commas, decimals and
-   brackets for negatives, e.g. (24,898.56). Never round or recalculate.
+4. Copy every number exactly as printed, including commas, decimals, currency
+   symbols and brackets for negatives, e.g. (24,898.56), $1,234, €1.234,5.
+   Never round, recalculate or change the number format.
 5. Render every table as a Markdown table with ALL its columns and rows.
    If a table has stacked header rows (e.g. "Quarter Ended" over dates over
    "Unaudited"), merge them into one header cell per column,
@@ -42,8 +45,10 @@ Return ONLY the page content as GitHub-flavoured Markdown. Rules:
 
 
 # --- Answering a question ---------------------------------------------------------
-# Filled in with .format(question=..., sources=...). The sources are the chunks
-# found by search, numbered [S1], [S2] ... so the answer can cite them.
+# Filled in with .format(question=..., companies=..., sources=...). The sources are
+# the chunks found by search, numbered [S1], [S2] ... so the answer can cite them.
+# "companies" lists each cited company's financial-year end (from Postgres), because
+# that differs by company (March in India, December in most of the US / EU ...).
 # The key idea: answer ONLY from the sources - never from general knowledge.
 # The "How periods work" block exists because a question about "the last 3
 # quarters" was refused although the cumulative (nine months) column answers
@@ -51,16 +56,20 @@ Return ONLY the page content as GitHub-flavoured Markdown. Rules:
 # single quarters) is matched or worked out the same way.
 NOT_FOUND = "I could not find this in the ingested filings."
 
-ANSWER_QUESTION = """You answer questions about Indian listed companies' financial result filings.
+ANSWER_QUESTION = """You answer questions about listed companies' financial filings.
 Use ONLY the sources below for facts and figures.
 
-How periods work in Indian results (use this to match a question to columns):
-- The financial year (FY) runs April to March; FY25 = 1 Apr 2024 to 31 Mar 2025.
-  Quarters: Q1 = Apr-Jun, Q2 = Jul-Sep, Q3 = Oct-Dec, Q4 = Jan-Mar.
+How periods work (use this to match a question to columns):
+- Each company has its own financial year (FY); "Companies" below says the month
+  it ends in. FY25 = the financial year that ENDS in 2025. Example for a year
+  ending in March: FY25 = 1 Apr 2024 to 31 Mar 2025, Q1 = Apr-Jun 2024,
+  Q3 = Oct-Dec 2024. For a year ending in December: FY25 = calendar 2025.
+  Quarters Q1-Q4 are the four 3-month parts of the FY; Q4 ends on the year-end.
   Halves: H1 = Q1 + Q2, H2 = Q3 + Q4.
-- Column types: "Quarter Ended <date>" = that one quarter; "<N> Months Ended
-  <date>" = cumulative from the start of the financial year up to that date;
-  "Year Ended 31.03" = the full financial year.
+- Each source's first line names its company and period.
+- Column types: "Quarter Ended" / "Three Months Ended <date>" = that one quarter;
+  "<N> Months Ended <date>" / "Year to date" = cumulative from the start of the
+  financial year up to that date; "Year Ended <date>" = the full financial year.
 - Any period is a sum of whole quarters. First look for a column that covers
   exactly the asked period. If none does, work it out from columns that do,
   e.g. a quarter = a cumulative column minus the quarters it contains that
@@ -68,12 +77,16 @@ How periods work in Indian results (use this to match a question to columns):
 - "Last N months/quarters" means the N months/quarters ending on the latest
   date in the sources, unless the question names the period.
 - Brackets around a number mean a negative value, e.g. (24,898.56) is a loss.
+- Amounts are in the currency and units the source states (e.g. "₹ in million",
+  "$ in thousands", "€m"). Keep them; never convert currency or units unless asked,
+  and say so if you do.
 
 Rules:
 1. If the sources do not contain the answer, reply with exactly:
    """ + NOT_FOUND + """
-2. Prefer a figure printed in the sources. Quote it exactly, with its units and
-   period (e.g. "(71,401.31) ₹ million for the nine months ended 31.12.2024").
+2. Prefer a figure printed in the sources. Quote it exactly, with its currency,
+   units and period (e.g. "(71,401.31) ₹ million for the nine months ended
+   31.12.2024" or "$4,210 thousand for the year ended 31 Dec 2025").
 3. Only if the figure is not printed but can be worked out from printed figures
    with simple arithmetic (add, subtract), do it, show the working line by line
    with every input cited, and label the result "calculated".
@@ -84,6 +97,9 @@ Rules:
 7. If sources disagree, say so and cite both.
 
 Question: {question}
+
+Companies:
+{companies}
 
 Sources:
 {sources}

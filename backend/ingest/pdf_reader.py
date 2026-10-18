@@ -57,7 +57,12 @@ MIN_TEXT_CHARS = 50
 TABLE_PAGES_TO_VISION = os.getenv("TABLE_PAGES_TO_VISION", "true").lower() == "true"
 TABLE_NUMERIC_SHARE = 0.35
 TABLE_MIN_LINES = 15
-FIGURE_LINE = re.compile(r"^[(\-–]?[₹`]?\s?[\d,]+(\.\d+)?\)?\s?(%|times)?$|^[-–]$", re.IGNORECASE)
+# A figure: optional bracket / minus, optional currency (₹ $ € £ ¥, Rs, US$), digits with any
+# grouping (1,234.5  1.234,5  1,23,456.7  1 234), optional closing bracket, %, "times" or "x";
+# or a lone dash (an empty cell).
+FIGURE_LINE = re.compile(
+    r"^[(\-–]?(?:[₹$€£¥`]|rs\.?|us\$)?\s?\d[\d,.\u00a0 ]*\)?\s?(%|times|x)?$|^[-–—]$",
+    re.IGNORECASE)
 
 # Image resolution used when rendering a scanned page. Higher = sharper small
 # print (pages with tiny notes need ~200), but bigger images and slower calls.

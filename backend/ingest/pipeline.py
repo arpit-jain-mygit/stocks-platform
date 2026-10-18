@@ -56,7 +56,9 @@ def describe(company: str, period: str, doc_type: str | None = None) -> dict:
     Raises ValueError for an unknown company, unreadable period or unknown doc type.
     """
     found = require_company(company)
-    return {"company_id": found.company_id, "company": found.name, **parse_period(period).fields(),
+    # The period's end date depends on the company's own financial-year end (e.g. March, December).
+    return {"company_id": found.company_id, "company": found.name,
+            **parse_period(period, found.fy_end_month).fields(),
             "doc_type": require_doc_type(doc_type)}
 
 

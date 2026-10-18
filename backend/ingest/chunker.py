@@ -37,7 +37,12 @@ MAKE_FACT_CARDS = True   # also make one small card per table row
 REPEAT_PAGE_SHARE = 0.2
 
 # Repeated lines that must never be removed: they carry units.
-KEEP_ALWAYS = re.compile(r"amounts? in|in (₹|rs\.?|inr)|million|crore|lakh", re.IGNORECASE)
+# Any currency and scale words: ₹ / $ / € / £ / ¥, INR / USD / EUR / GBP / JPY,
+# thousand / million / billion, crore / lakh, and short forms like "$m", "€bn".
+KEEP_ALWAYS = re.compile(
+    r"amounts? in|\bin (₹|rs\.?|inr|us\$|\$|usd|€|eur|£|gbp|¥|jpy)|thousands?|millions?|billions?|crores?|lakhs?"
+    r"|[₹$€£¥]\s?(k|m|mn|bn)\b",
+    re.IGNORECASE)
 
 # A numbered point at the start of a line: "5. ", "a) ", "(ii) ", "xiv) ", "iv.) "
 LABEL = re.compile(r"^\(?(\d{1,2}|[a-z]|[ivx]{1,5})[.)]\)?\s", re.IGNORECASE)

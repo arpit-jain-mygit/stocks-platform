@@ -59,7 +59,7 @@ from utils.doc_types import load_doc_types
 # Largest PDF accepted, in megabytes.
 MAX_UPLOAD_MB = 25
 
-app = FastAPI(title="Stocks RAG", description="Ask questions about Indian listed companies' financial results.")
+app = FastAPI(title="Stocks RAG", description="Ask questions about listed companies' financial filings.")
 
 # Risky delete APIs (api/risky_delete_apis/) exist only when switched on in .env:
 # ENABLE_RISKY_DELETE_APIS=true. They also need the X-Admin-Key header (ADMIN_API_KEY).

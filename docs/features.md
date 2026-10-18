@@ -39,6 +39,13 @@
   - [x] Never put `APP_API_KEY` in browser code – Vercel server function `api/proxy.ts` (allowlisted endpoints)
 - [ ] **Users support** (Google login)
 - [ ] **10 companies support**
+- [ ] **Global companies** (any market; English filings for now)
+  - [x] Periods follow each company's financial-year end (`fy_end_month`): `Q3 FY25`, `FY25`, `Q3 2025`, `2025`
+  - [x] Market-neutral prompts; the answer prompt lists each cited company's year-end
+  - [x] Any currency and number format in table detection and units lines ($ € £ ¥ ₹; 1,234.5 / 1.234,5 / 1,23,456)
+  - [ ] Filing sources per market (e.g. US EDGAR 10-K / 10-Q, UK / EU ESEF) and per-market eval sets - later
+  - [ ] Per-filing currency, units and accounting standard (Ind AS / IFRS / US GAAP) in Postgres; general exchange + ticker listings
+  - [ ] Non-English filings (OCR language packs, multilingual questions)
 - [ ] **Hindi and other languages support**
 - [ ] **Move platform to AWS or another cloud** (evaluate options)
 - [ ] **Evaluate other embedding models**

@@ -14,10 +14,13 @@ Steps:
 # search:  question -> closest chunks (query/search.py).
 # llm:     the configured answer model (utils/llm).
 # prompts: ANSWER_QUESTION and the NOT_FOUND reply.
+# calendar / find_company: each company's financial-year end month, by name.
+import calendar
 import re
 
 from query.search import TOP_K, Hit, search
 from utils import prompts
+from utils.companies import find_company
 from utils.llm import get_llm
 
 
@@ -34,6 +37,22 @@ def format_sources(hits: list[Hit]) -> str:
     )
 
 
+# --- Build the "Companies" part of the prompt -----------------------------------------
+def company_notes(hits: list[Hit]) -> str:
+    """
+    One line per company in the sources, with its financial-year end, e.g.
+        - OFSS (Oracle Financial Services Software Ltd): financial year ends in March
+    Periods mean different dates for different companies, so the model needs this.
+    """
+    lines = []
+    for company_id in dict.fromkeys(hit.company_id for hit in hits if hit.company_id):   # unique, in order
+        found = find_company(company_id)
+        if found:
+            lines.append(f"- {found.company_id} ({found.name}): financial year ends in "
+                         f"{calendar.month_name[found.fy_end_month]}")
+    return "\n".join(lines) or "- (not known)"
+
+
 # --- Main entry point ------------------------------------------------------------
 def answer(question: str, company: str | None = None, period: str | None = None,
            doc_type: str | None = None, top_k: int = TOP_K) -> dict:
@@ -46,7 +65,8 @@ def answer(question: str, company: str | None = None, period: str | None = None,
     if not hits:                                   # nothing stored (or filters too strict)
         return {"answer": prompts.NOT_FOUND, "sources": []}
 
-    prompt = prompts.ANSWER_QUESTION.format(question=question, sources=format_sources(hits))
+    prompt = prompts.ANSWER_QUESTION.format(question=question, companies=company_notes(hits),
+                                            sources=format_sources(hits))
     reply = get_llm("answer").generate_text(prompt)
 
     # Keep only the sources the answer refers to, in the order they were found.

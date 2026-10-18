@@ -1,6 +1,6 @@
 # Stocks RAG – How to run
 
-Ask questions about Indian listed companies' financial-result PDFs.
+Ask questions about listed companies' financial filings (PDFs) - any market; filings in English.
 Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · Data design: [db-design.md](db-design.md) · Roadmap: [features.md](features.md)
 
 Repo layout: **`backend/`** = FastAPI app, ingestion, eval, SQL (deployed to Railway) · **`ui/`** = web UI (Vercel) · **`docs/`** = these docs.
@@ -127,7 +127,9 @@ Every stored chunk uses the company's canonical **code** (`company_id`, e.g. `VI
 
 **Add a company or doc type:** `db/samples/add_company.sql` in the Supabase SQL editor (Block 1 company + aliases, Block 2 doc type). Dry run by default; it refuses identifiers that already belong to another company. The API sees changes within 60 seconds. List them with `GET /companies` and `GET /doc-types`.
 
-**Periods** use the Indian financial year (April–March): `Q3 FY25` = quarter ended 31-Dec-2024, `FY25` = year ended 31-Mar-2025. Each chunk stores `fiscal_year`, `quarter`, `period_end` and the label `Q3 FY25 (quarter ended 31-Dec-2024)`.
+**Periods** follow each company's own financial year, which ends in its `fy_end_month` (Postgres `companies`; 3 = March, the Indian default; 12 = December, most US / EU companies). `FY25` = the financial year that ends in 2025; Q4 ends on the year-end. Accepted: `Q3 FY25`, `FY25`, `Q3 2025`, `FY2025`, `2025`. For a March year-end, `Q3 FY25` = quarter ended 31-Dec-2024 and `FY25` = year ended 31-Mar-2025; for a December year-end, `Q3 FY25` = quarter ended 30-Sep-2025. Each chunk stores `fiscal_year`, `quarter`, `period_end` and a label like `Q3 FY25 (quarter ended 31-Dec-2024)`. Filters (`?period=`) use `fiscal_year` + `quarter`, so `Q3 FY25` means each company's own Q3 FY25.
+
+**Languages and currencies:** filings in English (OCR fallback: `OCR_LANGUAGE=eng`). Any currency and scale (₹, $, €, £, ¥; thousands, millions, billions, crore, lakh) - answers keep the currency and units printed in the filing.
 
 **Document types:** `quarterly_results` (default), `annual_report`, `financial_statements`, `investor_presentation`, `earnings_call_transcript`, `shareholding_pattern`, `announcement`. Input is normalised (`Annual Report` → `annual_report`); anything else is rejected. Stored on every chunk and filing record as `doc_type`.
 
