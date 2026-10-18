@@ -138,3 +138,9 @@ def test_trailing_source_list_is_removed_but_answers_are_kept(reply, expected):
 def test_prompt_asks_for_bracketed_citations_and_no_source_list():
     assert "exactly like [S2]" in prompts.ANSWER_QUESTION
     assert "Do not add a list of sources" in prompts.ANSWER_QUESTION
+
+
+def test_prompt_puts_printed_figures_first_and_limits_working():
+    assert "Never calculate a figure that is printed" in prompts.ANSWER_QUESTION
+    assert "at most 15 words" in prompts.ANSWER_QUESTION
+    assert "including prior-year and comparison figures" in prompts.ANSWER_QUESTION
