@@ -1,11 +1,10 @@
-// company.spec.ts - Unit tests for the company page (run with: npm test).
+// company-details.spec.ts - Unit tests for the company details shown in an opened card (npm test).
 // The backend is faked with HttpTestingController: no network calls.
 
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
-import { CompanyPage } from './company';
+import { CompanyDetails } from './company-details';
 import { CompanyDetail, DocTypes } from '../../services/stocks-api';
 
 const OFSS: CompanyDetail = {
@@ -22,20 +21,20 @@ const OFSS: CompanyDetail = {
 };
 const TYPES: DocTypes = { default: 'quarterly_results', doc_types: [{ code: 'annual_report', name: 'Annual report' }] };
 
-describe('CompanyPage', () => {
+describe('CompanyDetails', () => {
   let backend: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
     backend = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => backend.verify());   // fails if the page made a call the test didn't expect
 
-  // Opens the page for one company id; returns it with its two pending requests.
+  // Shows the details for one company id; returns them with the two pending requests.
   async function open(id: string) {
-    const fixture = TestBed.createComponent(CompanyPage);
-    fixture.componentRef.setInput('id', id);          // what the router does from the URL
+    const fixture = TestBed.createComponent(CompanyDetails);
+    fixture.componentRef.setInput('companyId', id);   // what the home page's card does
     await fixture.whenStable();
     return {
       fixture,
@@ -51,7 +50,7 @@ describe('CompanyPage', () => {
     types.flush(TYPES);
     await fixture.whenStable();
 
-    expect(page.querySelector('h1')?.textContent).toContain('Oracle Financial Services Software Ltd');
+    expect(page.textContent).toContain('active');                       // status
     expect(page.textContent).toContain('532466');                       // details
     expect(page.textContent).toContain('March');                        // FY end month as a name
     expect(page.querySelectorAll('.chips li').length).toBe(2);          // aliases
@@ -59,7 +58,6 @@ describe('CompanyPage', () => {
     expect(page.textContent).toContain('FY26 (year ended 31-Mar-2026)');
     expect(page.textContent).toContain('Annual report');                // doc type name, not the code
     expect(page.textContent).toContain('1,193');                        // chunks, formatted
-    expect(document.title).toBe('Oracle Financial Services Software Ltd - Stocks Platform');   // browser tab
   });
 
   it('says so for an unknown company', async () => {

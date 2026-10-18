@@ -1,23 +1,27 @@
-// home.ts - The home page, shown at "/" (see app.routes.ts).
-// Lists the companies that have ingested filings as cards; a card opens that company's page.
+// home.ts - The home view, shown at "/" (see app.routes.ts).
+// One card per company with ingested filings. Clicking a card opens its details
+// (company-details component) right under it; clicking again closes it.
+// The page address never changes.
 
 import { Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { CompanyDetails } from '../../components/company-details/company-details';
 import { Company, StocksApi } from '../../services/stocks-api';
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink],         // [routerLink] on the cards
+  imports: [CompanyDetails],     // <app-company-details> inside an opened card
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
 export class Home {
   private readonly api = inject(StocksApi);
 
-  // Page state as signals: when one changes, the template updates by itself.
+  // State as signals: when one changes, the template updates by itself.
   protected readonly companies = signal<Company[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal('');
+  /** The company whose card is open, or null. One card is open at a time. */
+  protected readonly openId = signal<string | null>(null);
 
   constructor() {
     this.load();
@@ -37,5 +41,10 @@ export class Home {
         this.loading.set(false);
       },
     });
+  }
+
+  /** Opens a card, or closes it if it is already open. */
+  protected toggle(id: string): void {
+    this.openId.update((current) => (current === id ? null : id));
   }
 }

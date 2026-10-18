@@ -24,13 +24,8 @@ describe('App', () => {
     expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain('Stocks Platform');
   });
 
-  it('shows the company page at "/companies/:id"', async () => {
+  it('sends unknown URLs (including old /companies/<code> links) to the home page', async () => {
     const harness = await RouterTestingHarness.create('/companies/OFSS');
-    expect(harness.routeNativeElement?.textContent).toContain('All companies');   // the page's back link
-  });
-
-  it('sends unknown URLs to the home page', async () => {
-    const harness = await RouterTestingHarness.create('/no-such-page');
     expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain('Stocks Platform');
   });
 });

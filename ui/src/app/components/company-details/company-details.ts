@@ -1,11 +1,9 @@
-// company.ts - One company's page, shown at /companies/<code> (see app.routes.ts).
-// Shows every detail the backend stores about the company, its aliases and its filings.
+// company-details.ts - Everything about one company, shown inside its card on the home page
+// when the card is opened: details, aliases and filings. The page address never changes.
 
 import { Component, effect, inject, input, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Title } from '@angular/platform-browser';
 import { HttpErrorResponse } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { CompanyDetail, StocksApi } from '../../services/stocks-api';
 
@@ -13,19 +11,18 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
                 'September', 'October', 'November', 'December'];
 
 @Component({
-  selector: 'app-company',
-  imports: [RouterLink, DatePipe, DecimalPipe],   // back link, date and number formatting
-  templateUrl: './company.html',
-  styleUrl: './company.css',
+  selector: 'app-company-details',
+  imports: [DatePipe, DecimalPipe],   // date and number formatting in the template
+  templateUrl: './company-details.html',
+  styleUrl: './company-details.css',
 })
-export class CompanyPage {
+export class CompanyDetails {
   private readonly api = inject(StocksApi);
-  private readonly title = inject(Title);       // the browser tab's title
 
-  /** The :id part of the URL, e.g. "OFSS" (filled in by the router). */
-  readonly id = input.required<string>();
+  /** Which company to show, e.g. "OFSS" (set by the home page's card). */
+  readonly companyId = input.required<string>();
 
-  // Page state as signals: when one changes, the template updates by itself.
+  // State as signals: when one changes, the template updates by itself.
   protected readonly company = signal<CompanyDetail | null>(null);
   protected readonly docTypeNames = signal<Record<string, string>>({});
   protected readonly loading = signal(true);
@@ -33,8 +30,8 @@ export class CompanyPage {
   protected readonly canRetry = signal(false);   // false for "no such company" - retrying won't help
 
   constructor() {
-    // Runs now and again whenever the URL's id changes (e.g. moving between companies).
-    effect(() => this.load(this.id()));
+    // Runs when the card opens, and again if the company id ever changes.
+    effect(() => this.load(this.companyId()));
   }
 
   /** Fetches the company (with filings) and the doc type names together. */
@@ -44,7 +41,6 @@ export class CompanyPage {
     forkJoin({ company: this.api.company(id), types: this.api.docTypes() }).subscribe({
       next: ({ company, types }) => {
         this.company.set(company);
-        this.title.setTitle(`${company.name} - Stocks Platform`);
         this.docTypeNames.set(Object.fromEntries(types.doc_types.map((t) => [t.code, t.name])));
         this.loading.set(false);
       },

@@ -1,51 +1,27 @@
-/* company.css - Styles for the company page only. */
+/* company-details.css - Styles for the details inside an opened company card. */
 
-/* Page column: centred, readable width, 16px side margin on phones. */
-.page {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 32px 16px 48px;
+:host {
+  display: block;
 }
 
-.back {
-  display: inline-block;
-  margin-bottom: 20px;
-  color: var(--accent);
-  text-decoration: none;
-  font-size: 0.875rem;
-}
-
-.back:hover {
-  text-decoration: underline;
-}
-
-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  margin-bottom: 24px;
-}
-
-h1 {
-  margin: 0;
-  font-size: 1.75rem;
-}
-
-h2 {
-  margin: 28px 0 10px;
-  font-size: 1.05rem;
-}
-
-h3 {
-  margin: 0;
+h4 {
+  margin: 20px 0 8px;
   font-size: 0.95rem;
+}
+
+section:first-child h4 {
+  margin-top: 0;
+}
+
+h5 {
+  margin: 0;
+  font-size: 0.9rem;
 }
 
 /* Label / value pairs in a responsive grid: 1 column on phones, more on wider screens. */
 .facts {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px 24px;
   margin: 0;
 }
@@ -67,7 +43,7 @@ dd {
   font-size: 0.85rem;
 }
 
-/* Long file names break instead of widening the page. */
+/* Long values (file names, CIN) break instead of widening the page. */
 .wrap {
   overflow-wrap: anywhere;
 }
@@ -86,17 +62,17 @@ dd {
   padding: 4px 10px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: var(--surface);
+  background: var(--bg);
   font-size: 0.875rem;
 }
 
-/* One card per filing. */
+/* One box per filing. */
 .filing {
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 12px;
-  background: var(--surface);
+  padding: 14px;
+  margin-bottom: 10px;
+  background: var(--bg);
 }
 
 .filing-head {
@@ -110,6 +86,7 @@ dd {
 
 /* Status badge; colour depends on the status value. */
 .badge {
+  display: inline-block;
   padding: 2px 10px;
   border-radius: 999px;
   border: 1px solid currentColor;
@@ -136,6 +113,7 @@ dd {
 }
 
 .status {
+  margin: 0;
   color: var(--muted);
 }
 
@@ -144,10 +122,11 @@ dd {
 }
 
 button {
+  margin-top: 8px;
   padding: 6px 14px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: var(--surface);
+  background: var(--bg);
   color: var(--text);
   cursor: pointer;
 }

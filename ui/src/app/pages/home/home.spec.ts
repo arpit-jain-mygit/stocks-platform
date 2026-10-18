@@ -4,7 +4,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
 import { Home } from './home';
 import { Company } from '../../services/stocks-api';
 
@@ -17,7 +16,7 @@ describe('Home', () => {
   let backend: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
     backend = TestBed.inject(HttpTestingController);
   });
 
@@ -36,11 +35,30 @@ describe('Home', () => {
     request.flush([OFSS]);
     await fixture.whenStable();
     expect(page.querySelector('h1')?.textContent).toContain('Stocks Platform');
-    const cards = page.querySelectorAll<HTMLAnchorElement>('a.company');
-    expect(cards.length).toBe(1);
-    expect(cards[0].getAttribute('href')).toBe('/companies/OFSS');      // the card opens the company page
+    expect(page.querySelectorAll('article.company').length).toBe(1);
     expect(page.textContent).toContain('Oracle Financial Services Software Ltd');
     expect(page.textContent).toContain('532466');
+  });
+
+  it('opens a card on click, closes it on the next click - the address never changes', async () => {
+    const { fixture, request, page } = await open();
+    request.flush([OFSS]);
+    await fixture.whenStable();
+    const head = page.querySelector('button.company-head') as HTMLButtonElement;
+    expect(head.getAttribute('aria-expanded')).toBe('false');
+    expect(page.querySelector('app-company-details')).toBeNull();
+
+    head.click();                                                        // open
+    await fixture.whenStable();
+    expect(head.getAttribute('aria-expanded')).toBe('true');
+    expect(page.querySelector('#details-OFSS app-company-details')).not.toBeNull();
+    backend.expectOne('/api/companies/OFSS');                            // details load only when opened
+    backend.expectOne('/api/doc-types');
+
+    head.click();                                                        // close
+    await fixture.whenStable();
+    expect(head.getAttribute('aria-expanded')).toBe('false');
+    expect(page.querySelector('app-company-details')).toBeNull();
   });
 
   it('says so when no company has data', async () => {
