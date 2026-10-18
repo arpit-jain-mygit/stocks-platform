@@ -131,6 +131,8 @@ Branch: `aws-serverless`.
 | CloudFront certificate error | Certificate not in `us-east-1` | Request the ACM certificate in `us-east-1` |
 | API Gateway returns 413 | Upload larger than 10 MB sent through the API | Use presigned uploads (1.3) |
 | Lambda timeout (503 or 504) | Ingestion running inside the API request | Move ingestion to the Fargate worker (1.6, 2.12); `/ask` only needs a few seconds |
+| Scanned pages fail on AWS with an OCR error | The OCR fallback ran in an image without Tesseract | Ingestion runs in the ECS worker, built from `backend/Dockerfile` (includes Tesseract). Check the task definition uses that image. Lambda does not read PDFs |
+| ECS task starts but exits at once | The task definition's command is still `uvicorn`, not the worker | Set the container command to `python -m ingest.worker` in the task definition |
 | Lambda `Runtime.ExitError` or out of memory | Memory too low for PDF rendering | Raise memory to 2–3 GB |
 | Cold start of 5–10 seconds | Large container image | Trim dependencies; provisioned concurrency only if needed |
 | `InvalidParameterException` for the container image | Image not pushed to ECR yet, or wrong tag | Push first, then `terraform apply` again |

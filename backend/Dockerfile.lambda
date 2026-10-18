@@ -1,8 +1,9 @@
 # Dockerfile.lambda - the API as an AWS Lambda container image (see docs/AWS.md, step 1.5).
 # Not used locally; the local Dockerfile (Railway) is unchanged.
 #
-# Tesseract (the OCR fallback) is not installed here: Lambda images are kept small.
-# Pages that need OCR are then marked as failed and can be re-read later from a local run.
+# This image serves the API only (questions and upload links). It does not read PDFs.
+# PDF ingestion runs in the ECS Fargate worker, built from backend/Dockerfile, which
+# installs Tesseract for the OCR fallback. So the OCR fallback works on AWS.
 
 # --- Base: the official AWS Lambda image for Python ----------------------------------
 FROM public.ecr.aws/lambda/python:3.14
