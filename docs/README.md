@@ -19,6 +19,7 @@ All commands run from **`backend/`** with the virtual environment active (`.env`
   - [1.4 Postgres](#14-postgres)
   - [1.5 Companies, periods and document types](#15-companies-periods-and-document-types)
 - [2. Run the whole ingestion pipeline (one command)](#2-run-the-whole-ingestion-pipeline-one-command)
+  - [2.1 Ingestion commands by document type](#21-ingestion-commands-by-document-type)
 - [3. Run the API](#3-run-the-api)
   - [3.1 Start the server](#31-start-the-server)
   - [3.2 Endpoints](#32-endpoints)
@@ -156,6 +157,64 @@ python -m ingest.pipeline data/<annual-report>.pdf VIDEOIND "FY24" --doc-type=an
 | Same PDF again (even renamed) | `already ingested … skipping` – no model calls |
 | Re-store anyway (e.g. after changing chunking) | add `--force` at the end – uses caches, so usually no model calls |
 | A page can't be read | Stops with an error; record marked `failed`; re-run to retry |
+
+### 2.1 Ingestion commands by document type
+
+Run these from `backend/` with the venv active. The syntax is the same for every document type:
+
+```bash
+python -m ingest.pipeline <PDF_PATH> <COMPANY> "<PERIOD>" --doc-type=<DOC_TYPE>
+```
+
+Add `--force` at the end to re-ingest a file that's already stored.
+
+**Placeholders**
+
+| Placeholder | Meaning | Examples |
+|---|---|---|
+| `<PDF_PATH>` | Path to the PDF (only PDFs are accepted today) | `/Users/arpit/Downloads/report.pdf` |
+| `<COMPANY>` | Company code, name, alias, ISIN, or `EXCHANGE:TICKER` | `MSFT`, `OFSS`, `NASDAQ:MSFT`, `Videocon` |
+| `"<PERIOD>"` | Quarter or year: `Q1 FY26` for a quarter, `FY26` for a full year | `"Q1 FY26"`, `"FY26"`, `"Q3 2025"` for calendar-year companies |
+| `<DOC_TYPE>` | One of the codes below | `quarterly_results` |
+
+**Document types**
+
+| Code | Use for |
+|---|---|
+| `quarterly_results` | Quarterly financial results (the default if you omit `--doc-type`) |
+| `annual_report` | Annual report |
+| `financial_statements` | Statements such as balance sheet, P&L, cash flow |
+| `earnings_call_transcript` | Earnings call transcript |
+| `investor_presentation` | Investor or earnings slide deck |
+| `announcement` | Corporate announcement, such as a board meeting or insolvency update |
+| `shareholding_pattern` | Shareholding pattern |
+
+**Examples**
+
+```bash
+# Quarterly results (default type)
+python -m ingest.pipeline /Users/arpit/Downloads/Videocon-Financial_Results_Dec-24.pdf VIDEOIND "Q3 FY25"
+
+# Annual report
+python -m ingest.pipeline /Users/arpit/Downloads/ofss-software-limited-ar-2025-26.pdf OFSS "FY26" --doc-type=annual_report
+
+# Earnings call transcript
+python -m ingest.pipeline /Users/arpit/Downloads/cdn-dynmedia-1.microsoft.com.pdf MSFT "Q1 FY26" --doc-type=earnings_call_transcript
+
+# Investor presentation (export the .pptx to PDF first)
+python -m ingest.pipeline /Users/arpit/Downloads/Microsoft-SlidesFY26Q1.pdf MSFT "Q1 FY26" --doc-type=investor_presentation
+
+# Financial statements
+python -m ingest.pipeline /Users/arpit/Downloads/MSFT-balance-sheet-Q1-FY26.pdf MSFT "Q1 FY26" --doc-type=financial_statements
+
+# Re-ingest a file that's already stored
+python -m ingest.pipeline /Users/arpit/Downloads/Microsoft-SlidesFY26Q1.pdf MSFT "Q1 FY26" --doc-type=investor_presentation --force
+```
+
+Things to keep in mind:
+- **Spreadsheets (`.xlsx`), PowerPoint (`.pptx`), CSV and Word files aren't accepted yet.** Export them to PDF first. Other formats are planned in [features.md](features.md).
+- **Quote the period.** Without quotes, the shell splits `Q1 FY26` into two arguments and the command fails.
+- **A new period needs its company's year-end.** `"Q1 FY26"` means the quarter ended 30 Sep 2025 for MSFT (June year-end) but 30 Jun 2025 for a company that ends its year in March.
 
 ---
 
