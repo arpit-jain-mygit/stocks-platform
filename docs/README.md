@@ -250,6 +250,30 @@ python eval/run_eval.py --self-test
 ```
 Each company's run is saved to **`eval/results/<COMPANY_ID>/run-<time>.json`**: summary, then per case the request, expected response, actual response, checks and failures – ready for an LLM judge to compare expected vs actual. Each question costs 1 embedding + 1 answer call.
 
+### 3.8 Automated API tests (run before and after every refactor)
+
+`backend/tests/` holds end-to-end tests: real API, pipeline, chunker, search and answer code, with in-memory
+fakes for Gemini, Qdrant and Postgres (`tests/fakes.py`). **Free, about 2 seconds, no network, never touches
+your data** (caches go to a temp folder; building a real Gemini / Qdrant / Postgres client fails the test).
+
+```bash
+pip install -r requirements-dev.txt
+```
+```bash
+python -m pytest
+```
+
+| Area | What is checked |
+|---|---|
+| Security | `/health` open; every other endpoint 401 without / with a wrong `X-API-Key`; risky APIs 403 without `X-Admin-Key`, 404 when switched off |
+| Ingestion | bad company / period / doc type / non-PDF → 400 with no model call; 3-page PDF → table + scanned pages to vision, fact cards, full chunk payload, filing record; duplicate → skipped; `force` → no duplicate chunks, caches reused; new version → old one superseded |
+| Questions | answer cites only used sources with file / doc_id; retrieved figure reaches the prompt; no data → not-found with no answer call; bad input → 400/422 with no model call |
+| Deletes | dry run changes nothing; real delete needs `confirm`; filing / company-filings / company cascade across both stores; other companies untouched |
+| Backup | create → wipe → restore (`replace`) brings back chunks, filings, company; dry run and missing `confirm` change nothing; bad file → 400 |
+
+These test the app's flow, not answer quality (that is the eval sets, 3.7) and not the real Qdrant /
+Postgres adapters.
+
 ---
 
 ## 4. Run each piece on its own

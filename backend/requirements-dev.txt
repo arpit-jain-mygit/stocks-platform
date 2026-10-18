@@ -1,0 +1,4 @@
+# Test-only packages (not needed to run the app or on Railway).
+# Install: pip install -r requirements-dev.txt
+-r requirements.txt
+pytest
