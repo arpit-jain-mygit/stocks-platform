@@ -1,48 +1,68 @@
-<!-- home.html - Home view: title, then one card per company with data.
-     A card's header is a button: it opens / closes the company's details under it.
-     @if / @for are Angular's template conditions and loops. -->
+<!-- home.html - Home view: title, company cards, and the selected company's details.
+     Wide screens: details in the right-hand panel. Narrow screens: details under the card.
+     @if / @for / @let are Angular's template conditions, loops and local names. -->
 <main class="home">
   <header>
     <h1>Stocks Platform</h1>
     <p class="subtitle">Ask questions about Indian listed companies&rsquo; filings.</p>
   </header>
 
-  <section aria-labelledby="companies-heading">
-    <h2 id="companies-heading">Companies</h2>
+  <div class="layout" [class.wide]="wide()">
+    <!-- Left: the company cards. -->
+    <section class="list" aria-labelledby="companies-heading">
+      <h2 id="companies-heading">Companies</h2>
 
-    @if (loading()) {
-      <p class="status">Loading companies&hellip;</p>
-    } @else if (error()) {
-      <p class="status error" role="alert">{{ error() }}</p>
-      <button type="button" class="retry" (click)="load()">Try again</button>
-    } @else {
-      @for (company of companies(); track company.company_id) {
-        @let isOpen = openId() === company.company_id;
-        <article class="company" [class.open]="isOpen">
-          <!-- Heading + button = an accessible "accordion": screen readers announce open / closed. -->
-          <h3>
-            <button type="button" class="company-head" (click)="toggle(company.company_id)"
-                    [attr.aria-expanded]="isOpen" [attr.aria-controls]="'details-' + company.company_id">
-              <span class="titles">
-                <span class="name">{{ company.name }}</span>
-                <span class="codes">
-                  @if (company.nse_symbol) { <span><span class="label">NSE</span> {{ company.nse_symbol }}</span> }
-                  @if (company.bse_code) { <span><span class="label">BSE</span> {{ company.bse_code }}</span> }
-                  @if (company.isin) { <span><span class="label">ISIN</span> {{ company.isin }}</span> }
+      @if (loading()) {
+        <p class="status">Loading companies&hellip;</p>
+      } @else if (error()) {
+        <p class="status error" role="alert">{{ error() }}</p>
+        <button type="button" class="retry" (click)="load()">Try again</button>
+      } @else {
+        @for (company of companies(); track company.company_id) {
+          @let isOpen = openId() === company.company_id;
+          <article class="company" [class.open]="isOpen">
+            <!-- Heading + button: screen readers announce whether its details are shown. -->
+            <h3>
+              <button type="button" class="company-head" (click)="toggle(company.company_id)"
+                      [attr.aria-expanded]="isOpen"
+                      [attr.aria-controls]="wide() ? 'company-panel' : 'details-' + company.company_id">
+                <span class="titles">
+                  <span class="name">{{ company.name }}</span>
+                  <span class="codes">
+                    @if (company.nse_symbol) { <span><span class="label">NSE</span> {{ company.nse_symbol }}</span> }
+                    @if (company.bse_code) { <span><span class="label">BSE</span> {{ company.bse_code }}</span> }
+                    @if (company.isin) { <span><span class="label">ISIN</span> {{ company.isin }}</span> }
+                  </span>
                 </span>
-              </span>
-              <span class="chevron" aria-hidden="true"></span>
-            </button>
-          </h3>
-          @if (isOpen) {
-            <div class="details" [id]="'details-' + company.company_id">
-              <app-company-details [companyId]="company.company_id" />
-            </div>
-          }
-        </article>
-      } @empty {
-        <p class="status">No companies with ingested filings yet.</p>
+                <span class="chevron" aria-hidden="true"></span>
+              </button>
+            </h3>
+            <!-- Narrow screens only: details open under the card. -->
+            @if (!wide() && isOpen) {
+              <div class="details" [id]="'details-' + company.company_id">
+                <app-company-details [companyId]="company.company_id" />
+              </div>
+            }
+          </article>
+        } @empty {
+          <p class="status">No companies with ingested filings yet.</p>
+        }
       }
+    </section>
+
+    <!-- Right (wide screens only): the selected company's details. -->
+    @if (wide()) {
+      <aside class="panel" id="company-panel" aria-label="Company details">
+        @if (openCompany(); as c) {
+          <div class="panel-head">
+            <h2>{{ c.name }}</h2>
+            <button type="button" class="close" (click)="toggle(c.company_id)" aria-label="Close details">&times;</button>
+          </div>
+          <app-company-details [companyId]="c.company_id" />
+        } @else {
+          <p class="status placeholder">Select a company to see its details and filings.</p>
+        }
+      </aside>
     }
-  </section>
+  </div>
 </main>

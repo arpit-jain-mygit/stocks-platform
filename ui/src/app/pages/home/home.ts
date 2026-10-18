@@ -1,15 +1,19 @@
-// home.ts - The home view, shown at "/" (see app.routes.ts).
-// One card per company with ingested filings. Clicking a card opens its details
-// (company-details component) right under it; clicking again closes it.
-// The page address never changes.
+// home.ts - The home view, shown at "/" (see app.routes.ts). The address never changes.
+//
+// Wide screens (900px+): company cards on the left, the selected company's details in a
+// panel on the right, so the rest of the list stays visible.
+// Narrow screens (phones): no room for two columns - details open under the card instead.
 
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { CompanyDetails } from '../../components/company-details/company-details';
 import { Company, StocksApi } from '../../services/stocks-api';
 
+/** Screen width from which the details move into the right-hand panel. */
+export const WIDE_SCREEN = '(min-width: 900px)';
+
 @Component({
   selector: 'app-home',
-  imports: [CompanyDetails],     // <app-company-details> inside an opened card
+  imports: [CompanyDetails],     // <app-company-details> in the panel or under a card
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
@@ -20,10 +24,15 @@ export class Home {
   protected readonly companies = signal<Company[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal('');
-  /** The company whose card is open, or null. One card is open at a time. */
+  /** The selected company's code, or null. One at a time. */
   protected readonly openId = signal<string | null>(null);
+  /** The selected company's record (for the panel heading). */
+  protected readonly openCompany = computed(() => this.companies().find((c) => c.company_id === this.openId()) ?? null);
+  /** true = two columns (panel on the right); false = details under the card. */
+  protected readonly wide = signal(true);
 
   constructor() {
+    this.watchScreenWidth();
     this.load();
   }
 
@@ -43,8 +52,18 @@ export class Home {
     });
   }
 
-  /** Opens a card, or closes it if it is already open. */
+  /** Selects a company, or unselects it if it is already selected. */
   protected toggle(id: string): void {
     this.openId.update((current) => (current === id ? null : id));
+  }
+
+  /** Keeps `wide` in step with the window width (e.g. rotating a tablet, resizing a window). */
+  private watchScreenWidth(): void {
+    if (typeof window === 'undefined' || !window.matchMedia) return;   // e.g. some test browsers
+    const query = window.matchMedia(WIDE_SCREEN);
+    const update = () => this.wide.set(query.matches);
+    update();
+    query.addEventListener('change', update);
+    inject(DestroyRef).onDestroy(() => query.removeEventListener('change', update));
   }
 }

@@ -40,25 +40,54 @@ describe('Home', () => {
     expect(page.textContent).toContain('532466');
   });
 
-  it('opens a card on click, closes it on the next click - the address never changes', async () => {
+  it('wide screen: a click shows the company in the right panel; clicking again clears it', async () => {
     const { fixture, request, page } = await open();
     request.flush([OFSS]);
     await fixture.whenStable();
     const head = page.querySelector('button.company-head') as HTMLButtonElement;
-    expect(head.getAttribute('aria-expanded')).toBe('false');
-    expect(page.querySelector('app-company-details')).toBeNull();
+    expect(page.querySelector('#company-panel')?.textContent).toContain('Select a company');
+    expect(head.getAttribute('aria-controls')).toBe('company-panel');
 
-    head.click();                                                        // open
+    head.click();                                                        // select
     await fixture.whenStable();
     expect(head.getAttribute('aria-expanded')).toBe('true');
-    expect(page.querySelector('#details-OFSS app-company-details')).not.toBeNull();
-    backend.expectOne('/api/companies/OFSS');                            // details load only when opened
+    expect(page.querySelector('#company-panel h2')?.textContent).toContain('Oracle Financial Services Software Ltd');
+    expect(page.querySelector('#company-panel app-company-details')).not.toBeNull();
+    expect(page.querySelector('.details')).toBeNull();                   // nothing opens under the card
+    backend.expectOne('/api/companies/OFSS');                            // details load only when selected
     backend.expectOne('/api/doc-types');
 
-    head.click();                                                        // close
+    (page.querySelector('#company-panel .close') as HTMLButtonElement).click();   // the panel's close button
     await fixture.whenStable();
     expect(head.getAttribute('aria-expanded')).toBe('false');
-    expect(page.querySelector('app-company-details')).toBeNull();
+    expect(page.querySelector('#company-panel')?.textContent).toContain('Select a company');
+  });
+
+  it('narrow screen: details open under the card, and there is no panel', async () => {
+    const original = window.matchMedia;
+    // Pretend to be a phone: the wide-screen media query does not match.
+    window.matchMedia = ((query: string) => ({ matches: false, media: query,
+      addEventListener: () => {}, removeEventListener: () => {} })) as unknown as typeof window.matchMedia;
+    try {
+      const { fixture, request, page } = await open();
+      request.flush([OFSS]);
+      await fixture.whenStable();
+      expect(page.querySelector('#company-panel')).toBeNull();
+      const head = page.querySelector('button.company-head') as HTMLButtonElement;
+      expect(head.getAttribute('aria-controls')).toBe('details-OFSS');
+
+      head.click();                                                      // open under the card
+      await fixture.whenStable();
+      expect(page.querySelector('#details-OFSS app-company-details')).not.toBeNull();
+      backend.expectOne('/api/companies/OFSS');
+      backend.expectOne('/api/doc-types');
+
+      head.click();                                                      // close
+      await fixture.whenStable();
+      expect(page.querySelector('#details-OFSS')).toBeNull();
+    } finally {
+      window.matchMedia = original;
+    }
   });
 
   it('says so when no company has data', async () => {

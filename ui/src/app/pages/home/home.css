@@ -1,8 +1,8 @@
 /* home.css - Styles for the home view only (Angular keeps them from leaking elsewhere). */
 
-/* Page column: centred, readable width, 16px side margin on phones. */
+/* Page column: centred, 16px side margin on phones. */
 .home {
-  max-width: 760px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 48px 16px;
 }
@@ -22,7 +22,62 @@ h2 {
   font-size: 1.1rem;
 }
 
-/* One card per company. */
+/* --- Layout: one column on phones; list + panel side by side on wide screens --- */
+.layout.wide {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* The panel stays in view while the list scrolls; long details scroll inside it. */
+.panel {
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  background: var(--surface);
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.close {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.placeholder {
+  margin: 0;
+}
+
+/* --- One card per company --- */
 .company {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -34,6 +89,11 @@ h2 {
 .company:hover,
 .company.open {
   border-color: var(--accent);
+}
+
+/* Selected card on wide screens: a stronger edge on the left. */
+.wide .company.open {
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 h3 {
@@ -87,7 +147,8 @@ h3 {
   color: var(--muted);
 }
 
-/* Small arrow drawn with borders: points down when closed, up when open. */
+/* Small arrow drawn with borders.
+   Phones: down when closed, up when open. Wide screens: points right, towards the panel. */
 .chevron {
   flex: none;
   width: 8px;
@@ -102,7 +163,16 @@ h3 {
   transform: rotate(-135deg);
 }
 
-/* The opened details, separated from the header by a line. */
+.wide .chevron,
+.wide .open .chevron {
+  transform: rotate(-45deg);
+}
+
+.wide .open .chevron {
+  border-color: var(--accent);
+}
+
+/* Narrow screens: details under the card, separated by a line. */
 .details {
   padding: 16px;
   border-top: 1px solid var(--border);
