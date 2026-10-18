@@ -8,7 +8,7 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { Chat } from '../../components/chat/chat';
 import { CompanyDetails } from '../../components/company-details/company-details';
-import { DISCLAIMER, MOTTO } from '../../disclaimer';
+import { APP_NAME, DISCLAIMER, MOTTO } from '../../disclaimer';
 import { Company, StocksApi } from '../../services/stocks-api';
 
 /** Screen width from which the details move into the right-hand panel. */
@@ -24,6 +24,7 @@ export class Home {
   private readonly api = inject(StocksApi);
 
   // The platform's promise and disclaimer (text lives in disclaimer.ts).
+  protected readonly appName = APP_NAME;
   protected readonly motto = MOTTO;
   protected readonly disclaimer = DISCLAIMER;
 

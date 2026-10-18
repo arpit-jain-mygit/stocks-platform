@@ -3,9 +3,10 @@
 // company details open inside their card, so the address stays "/".
 
 import { Routes } from '@angular/router';
+import { APP_NAME } from './disclaimer';
 import { Home } from './pages/home/home';
 
 export const routes: Routes = [
-  { path: '', component: Home, title: 'Stocks Platform' },   // "/" -> company cards
+  { path: '', component: Home, title: APP_NAME },   // "/" -> company cards (title = browser tab)
   { path: '**', redirectTo: '' },                             // any unknown URL -> home
 ];

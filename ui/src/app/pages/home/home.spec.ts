@@ -35,7 +35,7 @@ describe('Home', () => {
     const { fixture, request, page } = await open();
     request.flush([OFSS]);
     await fixture.whenStable();
-    expect(page.querySelector('h1')?.textContent).toContain('Stocks Platform');
+    expect(page.querySelector('h1')?.textContent).toContain('stocks-insights.ai');
     expect(page.querySelectorAll('article.company').length).toBe(1);
     expect(page.textContent).toContain('Oracle Financial Services Software Ltd');
     expect(page.textContent).toContain('532466');

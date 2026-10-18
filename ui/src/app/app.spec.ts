@@ -21,11 +21,11 @@ describe('App', () => {
 
   it('shows the home page at "/"', async () => {
     const harness = await RouterTestingHarness.create('/');
-    expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain('Stocks Platform');
+    expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain('stocks-insights.ai');
   });
 
   it('sends unknown URLs (including old /companies/<code> links) to the home page', async () => {
     const harness = await RouterTestingHarness.create('/companies/OFSS');
-    expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain('Stocks Platform');
+    expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain('stocks-insights.ai');
   });
 });

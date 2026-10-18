@@ -19,7 +19,7 @@ Secrets live only in `backend/.env` locally (copy `backend/.env.example`) and in
 
 ## Disclaimer
 
-Stocks Platform helps researchers find information in company filings and other documents it has ingested. Every answer is drawn only from those documents and cites its source.
+stocks-insights.ai helps researchers find information in company filings and other documents it has ingested. Every answer is drawn only from those documents and cites its source.
 
 It does **not** provide investment, financial, legal or tax advice, and it never recommends buying, selling or holding any security, nor gives price targets or forecasts. Asked for that, it replies: *"I can't recommend buying, selling or holding any stock. I can help you research it from the filings..."*
 
