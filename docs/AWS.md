@@ -90,7 +90,7 @@ Branch: `aws-serverless`.
 - [x] **2.6 Secrets:** SSM Parameter Store (SecureString) for `APP_API_KEY`, `ADMIN_API_KEY`, `GEMINI_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`, `DATABASE_URL`. Values are entered once, not written into Terraform files
 - [x] **2.7 Storage:** frontend, uploads and cache buckets created (11 resources) S3 buckets for the frontend, uploads and caches (private, encrypted, lifecycle rules on uploads)
 - [x] **2.8 Metadata table:** `stocks-insights-jobs` created (pay per request). Expiry still needs the app to set `expires_at` (follow-up to step 1.2) DynamoDB `jobs` table (on-demand billing)
-- [ ] **2.9 Backend:** ECR repository, Lambda function (container image, 2–3 GB memory, 5 min timeout), API Gateway HTTP API, IAM role with least privilege
+- [ ] **2.9 Backend:** (planned: 15 resources, awaiting apply. Zip package, not Docker; ECR not needed) ECR repository, Lambda function (container image, 2–3 GB memory, 5 min timeout), API Gateway HTTP API, IAM role with least privilege
 - [ ] **2.10 Frontend:** CloudFront distribution with origin access control to the frontend bucket
 - [ ] **2.11 API routing:** CloudFront behaviours for `/api/*` to API Gateway, allowing only `companies*`, `doc-types`, `documents*`, `ask`, `uploads`, `jobs/*`. The `X-API-Key` header is added as a CloudFront origin header
 - [ ] **2.12 Ingestion (phase 2b, optional now):** Fargate task definition, ECS cluster, Step Functions state machine
