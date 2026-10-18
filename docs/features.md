@@ -35,7 +35,7 @@
   - [x] `/health` as the health check; run `db/migrate.py` on deploy (pre-deploy command)
 - [ ] **Deploy UI to Vercel**
   - [x] UI calls the Railway API through `ui/api/proxy.ts` (`STOCKS_API_URL` / `STOCKS_API_KEY` on Vercel)
-  - [ ] CORS on the API allows only the Vercel domain(s)
+  - [x] CORS: not needed - the browser only calls the Vercel site; the proxy calls Railway server-to-server
   - [x] Never put `APP_API_KEY` in browser code – Vercel server function `api/proxy.ts` (allowlisted endpoints)
 - [ ] **Users support** (Google login)
 - [ ] **10 companies support**
