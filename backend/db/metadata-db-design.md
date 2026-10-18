@@ -10,6 +10,7 @@ Tables come from `db/migrations/` (`python db/migrate.py`), in order:
 | `002_filings.sql` | `filings` (one per PDF), "one live filing per slot" rule |
 | `003_seed_reference_data.sql` | starting doc types and companies (OFSS, VIDEOIND) |
 | `004_company_identifiers.sql` | `company_identifiers` (any market), `companies.country` |
+| `005_company_needs_isin_or_lei.sql` | rule: every company has an ISIN or an LEI (deferred trigger, checked at commit) |
 
 ---
 
@@ -82,6 +83,7 @@ Tables come from `db/migrations/` (`python db/migrate.py`), in order:
 | The same PDF is never stored twice | `filings.doc_id` = SHA-256 of the file bytes (primary key) |
 | One live filing per company + type + period | partial unique index `filings_one_live` on `(company_id, doc_type, fiscal_year, COALESCE(quarter, 0)) WHERE status = 'complete'`; a newer PDF marks the old one `superseded` and links it with `superseded_by` |
 | Only one default document type | partial unique index on `doc_types (is_default) WHERE is_default` |
+| Every company is identifiable worldwide | a deferred trigger refuses a company (or a removed identifier) that leaves it with no `isin` or `lei` identifier; checked at COMMIT, so company and identifiers can be written in one transaction |
 | Deleting a company removes its aliases and identifiers | `ON DELETE CASCADE` on both; filings must be deleted first (the delete APIs do chunks → filings → company) |
 | Not readable through Supabase's public REST API | row level security on every table, no policies; the app connects as the owner |
 | `updated_at` is always current | trigger `set_updated_at()` on `companies` and `filings` |

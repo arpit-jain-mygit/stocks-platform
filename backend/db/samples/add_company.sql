@@ -112,6 +112,11 @@ BEGIN
         VALUES (v_company_id, v_type, v_exchange, v_value);
     END LOOP;
 
+    -- Rule (migration 005): every company needs an ISIN or an LEI, so it can be identified worldwide.
+    IF NOT EXISTS (SELECT 1 FROM company_identifiers WHERE company_id = v_company_id AND type IN ('isin', 'lei')) THEN
+        RAISE EXCEPTION 'Add at least one identifier of type isin or lei, e.g. ''isin:US5949181045'' or ''lei:...''';
+    END IF;
+
     RAISE NOTICE 'Added company % (%) with % identifier(s) and % alias(es)',
         v_code, v_name, cardinality(v_identifiers), cardinality(v_aliases);
 
