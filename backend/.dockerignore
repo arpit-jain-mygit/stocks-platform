@@ -1,0 +1,23 @@
+# .dockerignore - files never copied into the image.
+# Secrets: come from Railway service variables instead.
+.env
+.env.*
+!.env.example
+# Local data and caches: PDFs are uploaded through /ingest; caches live on the volume.
+data/
+cache/
+eval/results/
+*.json.gz
+*.pages.md
+*.chunks.md
+# Python / test / editor clutter
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+tests/
+pytest.ini
+requirements-dev.txt
+.DS_Store
+.vscode/
+.idea/

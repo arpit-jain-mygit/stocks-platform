@@ -13,7 +13,9 @@ Run:  python db/migrate.py              apply new migrations
 # sys:          command-line flag.
 # Path:         finds the migrations folder.
 # psycopg:      Postgres driver.
-# dotenv_values: reads DATABASE_URL from the project's .env.
+# os:           DATABASE_URL from the environment (Railway variables).
+# dotenv_values: reads DATABASE_URL from the project's .env (local runs).
+import os
 import sys
 from pathlib import Path
 
@@ -25,9 +27,10 @@ MIGRATIONS = Path(__file__).parent / "migrations"
 
 
 def main() -> None:
-    url = dotenv_values(ROOT / ".env").get("DATABASE_URL")
+    # Local: backend/.env. Railway: there is no .env, the variable is set in the service.
+    url = dotenv_values(ROOT / ".env").get("DATABASE_URL") or os.getenv("DATABASE_URL")
     if not url:
-        raise SystemExit("DATABASE_URL is not set in .env")
+        raise SystemExit("DATABASE_URL is not set (backend/.env locally, service variables on Railway)")
 
     with psycopg.connect(url) as conn:
         conn.execute("""CREATE TABLE IF NOT EXISTS schema_migrations (

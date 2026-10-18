@@ -23,10 +23,10 @@
   - [ ] First commit + push; `main` as the default branch
   - [ ] Railway and Vercel deploy from this repo
 - [ ] **Deploy APIs to Railway** (FastAPI backend)
-  - [ ] Dockerfile with Tesseract (OCR fallback) + `uvicorn api.main:app`
+  - [x] Dockerfile with Tesseract (OCR fallback) + `uvicorn api.main:app` (`backend/Dockerfile`, `backend/railway.json`)
   - [ ] Secrets as Railway variables (Gemini, Qdrant, Supabase, `APP_API_KEY`, `ADMIN_API_KEY`); risky delete / backup APIs stay off
   - [ ] Page + vector caches on a Railway volume (or cloud storage) so restarts don't re-call models
-  - [ ] `/health` as the health check; run `db/migrate.py` on deploy
+  - [x] `/health` as the health check; run `db/migrate.py` on deploy (pre-deploy command)
 - [ ] **Deploy UI to Vercel**
   - [ ] UI calls the Railway API URL (env variable per environment)
   - [ ] CORS on the API allows only the Vercel domain(s)

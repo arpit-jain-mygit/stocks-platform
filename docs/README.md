@@ -411,7 +411,47 @@ Backup files contain all your data: keep them out of git (`.gitignore` covers `b
 
 ---
 
-## 6. Files the runs create
+## 6. Deploy the backend to Railway
+
+Files: `backend/Dockerfile` (Python + Tesseract + code), `backend/.dockerignore` (keeps `.env`, PDFs, caches,
+tests out of the image), `backend/railway.json` (build with the Dockerfile, run `python db/migrate.py` before
+each deploy, health check `/health`).
+
+Qdrant and Supabase are already in the cloud, so the Railway API sees the same companies, filings and chunks
+as your machine - nothing needs re-ingesting.
+
+1. **New project:** railway.com → New Project → Deploy from GitHub repo → `stocks-platform`.
+2. **Service → Settings:**
+   - Source → **Root Directory** = `/backend`
+   - **Config file path** = `/backend/railway.json` (the config file does not follow the root directory)
+   - Build → **Watch Paths** = `/backend/**` (a docs or UI change does not redeploy the API)
+3. **Service → Variables** (Raw Editor; names as in `.env.example`, values your own):
+   - `GEMINI_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`, `QDRANT_CHUNKS_COLLECTION`, `DATABASE_URL`
+   - `APP_API_KEY`, `ADMIN_API_KEY` - **new values**, not the ones in your local `.env`
+   - model / batch settings you changed from the defaults (`VISION_MODEL`, `ANSWER_MODEL`, `EMBED_MODEL`,
+     `EMBED_DIM`, `EMBED_BATCH_SIZE`, `EMBED_PAUSE_SECONDS`, `TABLE_PAGES_TO_VISION`, `METADATA_STORE`)
+   - `ENABLE_RISKY_DELETE_APIS=false`, `ENABLE_BACKUP_APIS=false`
+   - `DATABASE_URL`: use Supabase's **Session pooler** string (the direct one is IPv6-only)
+   - do **not** set `PORT` or `PAGE_CACHE_DIR` (Railway / the Dockerfile set them)
+4. **Volume:** right-click the service → Attach Volume → mount path **`/data`** (page + vector caches survive redeploys).
+5. **Networking → Generate Domain**, then **Deploy**.
+6. **Check the logs:** pre-deploy shows `0 applied, 3 already up to date`; the deploy turns green once `/health` answers.
+
+Test (replace the domain and key):
+
+```bash
+curl -s https://<your-app>.up.railway.app/health
+```
+```bash
+curl -s https://<your-app>.up.railway.app/companies -H "X-API-Key: <railway APP_API_KEY>"
+```
+
+Notes: one process only (ingestion jobs live in memory, so `/jobs` is lost on restart - the filing records in
+Postgres are not). Every push to `main` that touches `backend/` redeploys; run `python -m pytest` first.
+
+---
+
+## 7. Files the runs create
 
 | Path | What | Safe to delete? |
 |---|---|---|
@@ -423,7 +463,7 @@ Backup files contain all your data: keep them out of git (`.gitignore` covers `b
 
 ---
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 | Message | Fix |
 |---|---|
