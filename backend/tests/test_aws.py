@@ -220,3 +220,39 @@ def test_worker_main_runs_the_job_from_environment_variables(reset_settings, cli
     worker.main()
     job = api_main.jobs.get("job-w")
     assert job["status"] == "complete" and job["result"]["chunks"] > 0 and job["finished_at"]
+
+
+# --- Secrets from Parameter Store ----------------------------------------------------------------
+class FakeSsm:
+    def __init__(self, pages):
+        self.pages, self.calls = pages, []
+
+    def get_parameters_by_path(self, **request):
+        self.calls.append(request)
+        return self.pages[len(self.calls) - 1]
+
+
+def test_secrets_are_loaded_only_when_switched_on(reset_settings):
+    from utils import secrets
+    assert secrets.load_secrets(client=FakeSsm([])) == []                       # off by default
+    reset_settings.setenv("SECRETS_FROM_SSM", "true")
+    reset_settings.setenv("SSM_PREFIX", "/stocks-insights/")
+
+
+def test_secrets_fill_missing_variables_and_keep_existing_ones(reset_settings):
+    from utils import secrets
+    reset_settings.setenv("SECRETS_FROM_SSM", "true")
+    reset_settings.setenv("GEMINI_API_KEY", "already-local")
+    reset_settings.delenv("APP_API_KEY", raising=False)
+    client = FakeSsm([{"Parameters": [{"Name": "/stocks-insights/APP_API_KEY", "Value": "from-ssm"},
+                                      {"Name": "/stocks-insights/GEMINI_API_KEY", "Value": "from-ssm"}],
+                       "NextToken": "page2"},
+                      {"Parameters": [{"Name": "/stocks-insights/DATABASE_URL", "Value": "postgres://x"}]}])
+    loaded = secrets.load_secrets(client=client)
+    import os
+    assert sorted(loaded) == ["APP_API_KEY", "DATABASE_URL"]
+    assert os.environ["APP_API_KEY"] == "from-ssm"
+    assert os.environ["GEMINI_API_KEY"] == "already-local"                     # never overwritten
+    assert client.calls[0]["WithDecryption"] is True and client.calls[1]["NextToken"] == "page2"
+    reset_settings.delenv("APP_API_KEY", raising=False)
+    reset_settings.delenv("DATABASE_URL", raising=False)
