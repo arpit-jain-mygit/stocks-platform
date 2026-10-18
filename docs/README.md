@@ -3,7 +3,10 @@
 Ask questions about Indian listed companies' financial-result PDFs.
 Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · Data design: [db-design.md](db-design.md) · Roadmap: [features.md](features.md)
 
-All commands run from the **project root** (`stocks-rag/`) with the virtual environment active.
+Repo layout: **`backend/`** = FastAPI app, ingestion, eval, SQL (deployed to Railway) · **`ui/`** = web UI (Vercel, later) · **`docs/`** = these docs.
+Code paths in the docs (e.g. `ingest/chunker.py`, `data/`, `eval/`) are inside `backend/`.
+
+All commands run from **`backend/`** with the virtual environment active (`.env`, `data/` and the caches live there).
 
 ---
 
@@ -31,10 +34,14 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 ```bash
+cd backend
+```
+```bash
 pip install -r requirements.txt
 ```
 
-Run `source .venv/bin/activate` in every new terminal. A `ModuleNotFoundError` (e.g. `pymupdf`) means it is not active.
+The virtual environment lives at the repo root (`.venv/`); everything else runs from `backend/`.
+In every new terminal: `source .venv/bin/activate` from the repo root, then `cd backend`. A `ModuleNotFoundError` (e.g. `pymupdf`) means it is not active.
 
 ### 1.3 The `.env` file
 

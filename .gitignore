@@ -24,7 +24,7 @@ cache/
 *.pages.md
 *.chunks.md
 # Eval run outputs (re-created by every run)
-eval/results/
+**/eval/results/
 # Backups contain ALL data (Postgres rows + Qdrant chunks)
 backups/
 *.json.gz
@@ -79,7 +79,7 @@ htmlcov/
 .\#*
 
 # --- AI assistant local settings -----------------------------------------------
-.claude/settings.local.json
+**/.claude/settings.local.json
 .aider*
 
 # --- OS clutter ----------------------------------------------------------------
