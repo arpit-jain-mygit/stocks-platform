@@ -54,6 +54,21 @@ def company_notes(hits: list[Hit]) -> str:
     return "\n".join(lines) or "- (not known)"
 
 
+# A source list the model writes at the end ("* S2 statements.xlsx, sheet ...") duplicates the
+# sources the app already shows, so it is removed. Only lines at the END are removed.
+SOURCE_LINE = re.compile(
+    r"^\s*(?:[*-]\s*)?S\d+\s+\S+.*(?:\.(?:pdf|xlsx|csv|pptx|docx|txt|md)\b|,\s*(?:page|sheet|rows)\b)",
+    re.IGNORECASE)
+
+
+def clean_reply(reply: str) -> str:
+    """Removes a trailing list of sources (one line per source) from the model's answer."""
+    lines = reply.rstrip().split("\n")
+    while lines and (not lines[-1].strip() or SOURCE_LINE.match(lines[-1])):
+        lines.pop()
+    return "\n".join(lines).strip()
+
+
 # --- Main entry point ------------------------------------------------------------
 def answer(question: str, company: str | None = None, period: str | None = None,
            doc_type: str | None = None, top_k: int = TOP_K) -> dict:
@@ -72,7 +87,8 @@ def answer(question: str, company: str | None = None, period: str | None = None,
 
     # Keep only the sources the answer refers to, in the order they were found.
     # Handles "[S1]" as well as grouped citations like "[S1, S4]".
-    cited = {int(n) for group in re.findall(r"\[(S[^\]]*)\]", reply) for n in re.findall(r"S(\d+)", group)}
+    reply = clean_reply(reply)
+    cited = {int(n) for n in re.findall(r"\bS(\d+)\b", reply)}      # [S2], [S2, S4] and a bare S2 all count
     sources = [
         {
             "ref": f"S{n}",

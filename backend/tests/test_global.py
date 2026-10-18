@@ -120,3 +120,21 @@ def test_answer_prompt_forbids_investment_advice_with_the_exact_reply():
     assert "Never give investment advice" in prompts.ANSWER_QUESTION
     assert prompts.NO_ADVICE in prompts.ANSWER_QUESTION
     assert prompts.NO_ADVICE.startswith("I can't recommend buying, selling or holding any stock.")
+
+
+# =====================================================================================
+# 5. Answer text: citations and the source list
+# =====================================================================================
+@pytest.mark.parametrize("reply, expected", [
+    ("Revenue rose 18% [S2].\n\n* S2 cdn.xlsx, sheet 'Segment Results', rows 3-28\n* S4 deck.pdf, page 4", "Revenue rose 18% [S2]."),
+    ("S2 says revenue rose 18%.", "S2 says revenue rose 18%."),        # an answer, not a source list: kept
+    ("Revenue rose 18% [S2].\nS4 Microsoft-SlidesFY26Q1.pdf, page 4", "Revenue rose 18% [S2]."),
+])
+def test_trailing_source_list_is_removed_but_answers_are_kept(reply, expected):
+    from query.answer import clean_reply
+    assert clean_reply(reply) == expected
+
+
+def test_prompt_asks_for_bracketed_citations_and_no_source_list():
+    assert "exactly like [S2]" in prompts.ANSWER_QUESTION
+    assert "Do not add a list of sources" in prompts.ANSWER_QUESTION

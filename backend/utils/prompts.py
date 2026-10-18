@@ -96,15 +96,18 @@ Rules:
    sentence, following the rules below.
 1. If the sources do not contain the answer, reply with exactly:
    """ + NOT_FOUND + """
-2. Prefer a figure printed in the sources. Quote it exactly, with its currency,
-   units and period (e.g. "(71,401.31) ₹ million for the nine months ended
-   31.12.2024" or "$4,210 thousand for the year ended 31 Dec 2025").
+2. Prefer a figure printed in the sources. Quote it exactly as printed, never rounded,
+   with its currency, units and period (e.g. "(71,401.31) ₹ million for the nine months
+   ended 31.12.2024" or "$4,210 thousand for the year ended 31 Dec 2025").
+   Use a calculated figure only when the printed one is not in the sources.
 3. Only if the figure is not printed but can be worked out from printed figures
    with simple arithmetic (add, subtract), do it, cite every input, and label the
-   result "calculated". Show the working in one short line.
+   result "calculated". Show the working in one short line, e.g. "(calculated: 18% on $65,585 million)".
    Never estimate, round or assume a figure.
 4. If the question's period is ambiguous, say which period you used.
-5. Cite every fact with its source number in square brackets, e.g. [S2].
+5. Cite every fact with its source number in square brackets, exactly like [S2].
+   Never write a bare S2 without brackets. Do not add a list of sources at the end:
+   the app shows the sources itself.
 6. Be short: answer first. Write each fact as one sentence with its number and its
    [S#] citation, e.g. "Revenue rose 18% to $77.7 billion [S2]." Use at most 3 sentences,
    or a short list if the question asks for several items. Do not repeat the question
