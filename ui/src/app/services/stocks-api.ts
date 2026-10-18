@@ -87,6 +87,7 @@ export interface Source {
 export interface AskResponse {
   answer: string;
   sources: Source[];
+  unverified_figures?: string[];   // optional: figures in the answer not found in the sources (empty = all found)
 }
 
 /** Allowed document types (GET /doc-types). */

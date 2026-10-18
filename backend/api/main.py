@@ -103,6 +103,7 @@ class Source(BaseModel):
 class AskResponse(BaseModel):
     answer: str
     sources: list[Source]
+    unverified_figures: list[str] = []   # figures in the answer not found in the sources (empty = all found)
 
 
 # --- Background work ---------------------------------------------------------------------

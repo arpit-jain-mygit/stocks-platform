@@ -174,7 +174,7 @@ def test_ask_answers_from_ingested_chunks_with_sources(client, llm, make_pdf, in
 def test_ask_with_no_matching_data_says_not_found_without_answer_call(client, llm, make_pdf, ingest):
     ingest(make_pdf())                                       # Videocon data only
     result = client.post("/ask", json={"question": "What was revenue?", "company": "OFSS"}).json()
-    assert result == {"answer": prompts.NOT_FOUND, "sources": []}
+    assert result == {"answer": prompts.NOT_FOUND, "sources": [], "unverified_figures": []}
     assert llm["answer"].calls["generate_text"] == 0
 
 

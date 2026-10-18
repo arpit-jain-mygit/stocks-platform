@@ -18,6 +18,7 @@ Steps:
 import calendar
 import re
 
+from query.figures import figure_problems
 from query.search import TOP_K, Hit, search
 from utils import prompts
 from utils.companies import find_company
@@ -78,24 +79,52 @@ def clean_reply(reply: str) -> str:
 
 
 # --- Main entry point ------------------------------------------------------------
+# Comparison questions ("change", "compared with", "growth") need the prior-period figures too,
+# which are often in other sheets or slides. They get at least this many sources.
+COMPARISON_TOP_K = 12
+COMPARISON_WORDS = re.compile(
+    r"\b(compare|compared|comparison|change|changed|growth|grew|grow|increase|increased|decrease|decreased|"
+    r"versus|vs|year on year|quarter on quarter|same period|previous|prior)\b", re.IGNORECASE)
+
+
+def wants_comparison(question: str) -> bool:
+    """True for questions that compare with an earlier period."""
+    return bool(COMPARISON_WORDS.search(question))
+
+
 def answer(question: str, company: str | None = None, period: str | None = None,
            doc_type: str | None = None, top_k: int = TOP_K) -> dict:
     """
-    Returns {"answer": str, "sources": [...]}.
+    Returns {"answer": str, "sources": [...], "unverified_figures": [...]}.
     sources lists only the chunks the answer actually cites, each with
     file, pages, section, kind and search score.
+    unverified_figures lists figures in the answer that are not in the sources, after one
+    rewrite. Empty = every figure was found in the sources.
     """
+    if wants_comparison(question):
+        top_k = max(top_k, COMPARISON_TOP_K)
     hits = search(question, company=company, period=period, doc_type=doc_type, top_k=top_k)
     if not hits:                                   # nothing stored (or filters too strict)
-        return {"answer": prompts.NOT_FOUND, "sources": []}
+        return {"answer": prompts.NOT_FOUND, "sources": [], "unverified_figures": []}
 
+    texts = [hit.text for hit in hits]
     prompt = prompts.ANSWER_QUESTION.format(question=question, companies=company_notes(hits),
                                             sources=format_sources(hits))
-    reply = get_llm("answer").generate_text(prompt)
+    reply = clean_reply(get_llm("answer").generate_text(prompt))
+
+    # Figures not in the sources (or badly formatted): ask once for a rewrite, then report what is left.
+    problems = figure_problems(reply, texts)
+    if problems:
+        print(f"figures not verified: {problems} - asking for one rewrite")
+        rewrite = (prompt + "\n\nYour previous answer used figures that are not printed in the sources "
+                   f"or are badly formatted: {', '.join(problems)}. Rewrite the answer. Quote only figures "
+                   "printed in the sources, formatted with standard separators (for example 77.7 billion "
+                   "or 77,673 million).")
+        reply = clean_reply(get_llm("answer").generate_text(rewrite))
+        problems = figure_problems(reply, texts)
 
     # Keep only the sources the answer refers to, in the order they were found.
     # Handles "[S1]" as well as grouped citations like "[S1, S4]".
-    reply = clean_reply(reply)
     cited = {int(n) for n in re.findall(r"\bS(\d+)\b", reply)}      # [S2], [S2, S4] and a bare S2 all count
     sources = [
         {
@@ -112,7 +141,7 @@ def answer(question: str, company: str | None = None, period: str | None = None,
         }
         for n, hit in enumerate(hits, start=1) if n in cited
     ]
-    return {"answer": reply, "sources": sources}
+    return {"answer": reply, "sources": sources, "unverified_figures": problems}
 
 
 # --- Quick manual test -------------------------------------------------------

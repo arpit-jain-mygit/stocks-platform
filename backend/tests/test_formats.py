@@ -194,7 +194,7 @@ def test_spreadsheet_citation_shows_sheet_and_rows_not_a_page(client, llm, inges
     source = result["sources"][0]
     assert source["location"].startswith("sheet '") and "rows " in source["location"]
     assert source["citation"] == source["location"] and source["pages"] == ""
-    [prompt] = llm["answer"].prompts
+    prompt = llm["answer"].prompts[0]                  # the first answer prompt (a rewrite may follow)
     assert "statements.xlsx, sheet '" in prompt and "statements.xlsx, page" not in prompt
 
 
