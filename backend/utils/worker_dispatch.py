@@ -7,6 +7,7 @@ Settings (environment variables, set by Terraform in Phase 2):
     ECS_SUBNETS              comma-separated private subnet IDs
     ECS_SECURITY_GROUPS      comma-separated security group IDs
     ECS_CONTAINER_NAME       the container name in the task (default "worker")
+    ECS_ASSIGN_PUBLIC_IP     ENABLED or DISABLED (default DISABLED; ENABLED for public subnets without NAT)
 
 The job's details are passed to the task as environment variables (see ingest/worker.py main()).
 Pay as you go: the task runs only while the file is being processed.
@@ -35,7 +36,8 @@ def dispatch_worker(job_id: str, upload_key: str, file_name: str, company: str, 
         networkConfiguration={"awsvpcConfiguration": {
             "subnets": [s.strip() for s in os.environ["ECS_SUBNETS"].split(",") if s.strip()],
             "securityGroups": [s.strip() for s in os.environ["ECS_SECURITY_GROUPS"].split(",") if s.strip()],
-            "assignPublicIp": "DISABLED",
+            # ENABLED lets the task reach Gemini, Qdrant and Supabase without a NAT gateway (set by Terraform).
+            "assignPublicIp": os.getenv("ECS_ASSIGN_PUBLIC_IP", "DISABLED"),
         }},
         overrides={"containerOverrides": [{
             "name": os.getenv("ECS_CONTAINER_NAME", "worker"),

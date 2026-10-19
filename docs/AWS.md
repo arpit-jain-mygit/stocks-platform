@@ -90,10 +90,10 @@ Branch: `aws-serverless`.
 - [x] **2.6 Secrets:** SSM Parameter Store (SecureString) for `APP_API_KEY`, `ADMIN_API_KEY`, `GEMINI_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`, `DATABASE_URL`. Values are entered once, not written into Terraform files
 - [x] **2.7 Storage:** frontend, uploads and cache buckets created (11 resources) S3 buckets for the frontend, uploads and caches (private, encrypted, lifecycle rules on uploads)
 - [x] **2.8 Metadata table:** `stocks-insights-jobs` created (pay per request). Expiry still needs the app to set `expires_at` (follow-up to step 1.2) DynamoDB `jobs` table (on-demand billing)
-- [ ] **2.9 Backend:** (planned: 15 resources, awaiting apply; plan regenerated, 15 to add. Zip package, not Docker; no ECR) IAM role with least privilege, Lambda function (zip, arm64, python 3.14, 2048 MB, 60 s timeout), API Gateway HTTP API. Zip is 40 MB zipped / 131 MB unzipped (limit 250 MB) after moving PDF, Office, uvicorn packages out of the Lambda build; the API imports without them (test_lambda_imports.py)
-- [ ] **2.10 Frontend:** CloudFront distribution with origin access control to the frontend bucket
-- [ ] **2.11 API routing:** CloudFront behaviours for `/api/*` to API Gateway, allowing only `companies*`, `doc-types`, `documents*`, `ask`, `uploads`, `jobs/*`. The `X-API-Key` header is added as a CloudFront origin header
-- [ ] **2.12 Ingestion (phase 2b, optional now):** Fargate task definition, ECS cluster, Step Functions state machine
+- [x] **2.9 Backend:** (applied: 15 resources added. API endpoint https://9l1e52v7ia.execute-api.ap-south-1.amazonaws.com, GET /health returns 200. Zip package, not Docker; no ECR) IAM role with least privilege, Lambda function (zip, arm64, python 3.14, 2048 MB, 60 s timeout), API Gateway HTTP API. Zip is 40 MB zipped / 131 MB unzipped (limit 250 MB) after moving PDF, Office, uvicorn packages out of the Lambda build; the API imports without them (test_lambda_imports.py)
+- [x] **2.10 Frontend:** applied. CloudFront https://d1zkomffgjvef3.cloudfront.net; origin access control, routing function (`infra/cf/api_router.js`), bucket policy. Site root returns 403 until the Angular build is uploaded (phase 3). Support case 179233617900178 approved the account
+- [x] **2.11 API routing:** (applied: `/api/*` to API Gateway. The function allows GET companies, doc-types, documents, jobs/<id>, POST ask and uploads only; other paths and methods get 404; `/api` is removed before forwarding). The `X-API-Key` header is added as a CloudFront origin header
+- [x] **2.12 Ingestion:** applied 2026-10-19 (ECR, CodeBuild, ECS cluster and task definition, roles, security group, Lambda ECS settings). Worker image built and pushed by `backend/scripts/build_worker_image.sh`. The push failed at first because the CodeBuild role had the wrong action name (`ecr:BatchCheckLayerAvailable`, correct: `ecr:BatchCheckLayerAvailability`). Fixed. End-to-end test passed 2026-10-19: upload link, S3 PUT, /ingest (direct to API Gateway, /ingest is not routed through CloudFront), worker task, job complete, one cited answer. Worker fixes on the way: load SSM secrets before imports; IAM ListBucket on the cache bucket (worker and API). Test filing (VIDEOIND, Q2 FY10, e2e-test.pdf) removed afterwards with ingest/remove.py, dry run first. Was planned as: Fargate task definition, ECS cluster, Step Functions state machine (Step Functions skipped)
 - [ ] **2.13 Monitoring:** CloudWatch log groups with a 30-day retention, alarms for Lambda errors and API 5xx
 - [ ] **2.14 Apply:** `terraform plan` reviewed by you, then `terraform apply`
 
@@ -103,8 +103,8 @@ Branch: `aws-serverless`.
 
 - [ ] **3.1 Backend image:** build, push to ECR, update the Lambda function
 - [ ] **3.2 Database migrations:** run `python db/migrate.py` once from your Mac (or a one-off task). Migrations already applied to Supabase are skipped
-- [ ] **3.3 Frontend:** `npm run build`, upload `dist/stocks-ui/browser` to the frontend bucket, create a CloudFront invalidation
-- [ ] **3.4 Smoke tests:** `/health`, `/companies?ingested=true`, one question in the chat, one upload
+- [x] **3.3 Frontend:** done 2026-10-19: 4 files uploaded to the frontend bucket, invalidation IBCFPFN4FFTNZVZUQHONPFTTBZ on E1AIR4NMCC3PLD. Was: `npm run build`, upload `dist/stocks-ui/browser` to the frontend bucket, create a CloudFront invalidation
+- [~] **3.4 Smoke tests:** passed 2026-10-19: site root and Angular route 200, `/api/companies?ingested=true`, `/api/doc-types`, `/api/companies/OFSS` 200, `/api/ask` answered with sources (one Gemini call), `/api/ingest` and `/api/risky-delete/x` 404. Upload not tested: ingest waits for 2.12. Was: `/health`, `/companies?ingested=true`, one question in the chat, one upload
 - [ ] **3.5 CI/CD:** GitHub Actions with OIDC (no stored AWS keys): backend workflow and frontend workflow, both running the tests first
 
 ---

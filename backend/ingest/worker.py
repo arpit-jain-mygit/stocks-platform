@@ -18,9 +18,15 @@ Two ways it runs:
 import os
 from datetime import datetime, timezone
 
-from ingest.pipeline import ingest_pdf
-from utils.jobs import job_store
-from utils.uploads import read_upload
+# On AWS the task's secrets come from Parameter Store. They must be loaded BEFORE the pipeline is
+# imported, because some modules read DATABASE_URL and other keys when they are imported.
+from utils.secrets import load_secrets
+
+load_secrets()
+
+from ingest.pipeline import ingest_pdf  # noqa: E402  (must come after load_secrets)
+from utils.jobs import job_store  # noqa: E402
+from utils.uploads import read_upload  # noqa: E402
 
 
 def run_job(job_id: str, pdf_bytes: bytes, file_name: str, company: str, period: str,

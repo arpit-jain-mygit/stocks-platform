@@ -45,6 +45,10 @@ data "aws_iam_policy_document" "api" {
     actions   = ["s3:GetObject", "s3:PutObject"]
     resources = ["${aws_s3_bucket.cache.arn}/*"]
   }
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = [aws_s3_bucket.cache.arn]
+  }
   # Uploads: read them, and create presigned upload links (PutObject).
   statement {
     actions   = ["s3:GetObject", "s3:PutObject"]
@@ -54,6 +58,15 @@ data "aws_iam_policy_document" "api" {
   statement {
     actions   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem"]
     resources = [aws_dynamodb_table.jobs.arn]
+  }
+  # Start an ingestion worker task (utils/worker_dispatch.py) and hand it its roles.
+  statement {
+    actions   = ["ecs:RunTask"]
+    resources = ["arn:aws:ecs:${var.aws_region}:${var.account_id}:task-definition/${var.project}-worker:*"]
+  }
+  statement {
+    actions   = ["iam:PassRole"]
+    resources = [aws_iam_role.worker_execution.arn, aws_iam_role.worker.arn]
   }
 }
 
@@ -87,6 +100,12 @@ resource "aws_lambda_function" "api" {
       INGEST_MODE              = "worker"
       ENABLE_RISKY_DELETE_APIS = "false"
       ENABLE_BACKUP_APIS       = "false"
+      ECS_CLUSTER              = aws_ecs_cluster.worker.name
+      ECS_TASK_DEFINITION      = aws_ecs_task_definition.worker.family
+      ECS_SUBNETS              = join(",", data.aws_subnets.default.ids)
+      ECS_SECURITY_GROUPS      = aws_security_group.worker.id
+      ECS_CONTAINER_NAME       = "worker"
+      ECS_ASSIGN_PUBLIC_IP     = "ENABLED"
     }
   }
 }
