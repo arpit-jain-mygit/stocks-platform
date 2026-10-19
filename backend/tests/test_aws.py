@@ -135,6 +135,15 @@ def test_dynamo_job_store_round_trip_keeps_nested_results():
     assert store.get("missing") is None
 
 
+def test_dynamo_jobs_get_a_ttl_of_30_days():
+    import time
+    from utils.jobs import JOB_TTL_DAYS
+    resource = FakeDynamo()
+    DynamoJobStore("jobs", resource=resource).create("j3", {"job_id": "j3", "status": "queued"})
+    stored = resource.table_obj.items["j3"]
+    assert stored["expires_at"] - int(time.time()) == pytest.approx(JOB_TTL_DAYS * 86400, abs=60)
+
+
 # --- Uploads ---------------------------------------------------------------------------------
 def test_create_upload_gives_a_presigned_link_under_uploads(reset_settings):
     reset_settings.setenv("UPLOAD_BUCKET", "uploads-bucket")

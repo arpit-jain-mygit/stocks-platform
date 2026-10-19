@@ -15,6 +15,7 @@ attribute ("body"), so any job fields (nested results, lists, numbers) are saved
 import functools
 import json
 import os
+import time
 
 
 class JobStore:
@@ -65,6 +66,10 @@ class MemoryJobStore(JobStore):
         self._jobs.clear()
 
 
+# Jobs are kept this long, then DynamoDB's TTL deletes them (same as the log retention).
+JOB_TTL_DAYS = 30
+
+
 class DynamoJobStore(JobStore):
     """Jobs in a DynamoDB table with partition key "job_id" and a text attribute "body"."""
 
@@ -84,7 +89,9 @@ class DynamoJobStore(JobStore):
         return json.loads(item["body"]) if item else None
 
     def _save(self, job_id: str, job: dict) -> None:
-        self.table.put_item(Item={"job_id": job_id, "body": json.dumps(job)})
+        # expires_at is the table's TTL attribute: DynamoDB deletes the job after this time (Unix seconds).
+        expires_at = int(time.time()) + JOB_TTL_DAYS * 86400
+        self.table.put_item(Item={"job_id": job_id, "body": json.dumps(job), "expires_at": expires_at})
 
     def clear(self) -> None:
         raise NotImplementedError("clear is not used on DynamoDB (jobs expire by table TTL)")

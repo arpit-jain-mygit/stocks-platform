@@ -25,7 +25,13 @@ variable "account_id" {
 }
 
 variable "upload_allowed_origins" {
-  description = "Sites allowed to upload PDFs with presigned links. Tighten to the CloudFront domain in step 2.10."
+  description = "Sites allowed to upload PDFs with presigned links (the CloudFront site, step 2.10). Add another site here only if it uploads from the browser."
   type        = list(string)
-  default     = ["*"]
+  default     = ["https://d1zkomffgjvef3.cloudfront.net"]
+}
+
+variable "alert_email" {
+  description = "Where CloudWatch alarms send their messages. AWS sends a confirmation email you must click once."
+  type        = string
+  default     = "sachin.arpit.learning@gmail.com"
 }
