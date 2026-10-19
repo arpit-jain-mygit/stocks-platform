@@ -1,0 +1,60 @@
+# backend.yml - tests the backend, then deploys the API (Lambda) and builds the worker image (CodeBuild).
+# Runs on pushes that change backend/. Needs the repository variable AWS_ROLE_ARN (see infra/github_oidc.tf).
+name: backend
+
+on:
+  push:
+    branches: [main, aws-serverless]
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # lets this job ask GitHub for a token that AWS accepts
+  contents: read
+
+concurrency: backend-deploy
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      AWS_REGION: ap-south-1
+      AWS_PROFILE_NAME: ""   # the scripts use the credentials from the role, not a local profile
+      PYTHON: python
+      ARTIFACTS_BUCKET: stocks-insights-artifacts-552808407801
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install test requirements
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Test (offline, no model calls)
+        run: python -m pytest -q
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build the Lambda zip (arm64, Python 3.14)
+        run: bash scripts/build_lambda.sh
+
+      - name: Deploy the API
+        run: |
+          aws s3 cp dist/stocks-insights-api.zip s3://$ARTIFACTS_BUCKET/api/stocks-insights-api.zip
+          aws lambda update-function-code --function-name stocks-insights-api \
+            --s3-bucket $ARTIFACTS_BUCKET --s3-key api/stocks-insights-api.zip
+          aws lambda wait function-updated --function-name stocks-insights-api
+          curl -sf "https://$(aws apigatewayv2 get-api --api-id 9l1e52v7ia --query ApiEndpoint --output text | sed 's#https://##')/health"
+
+      - name: Build and push the ingestion worker image
+        run: bash scripts/build_worker_image.sh

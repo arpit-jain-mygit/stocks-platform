@@ -1,0 +1,52 @@
+# frontend.yml - tests the Angular site, then uploads it to the frontend bucket and clears the CloudFront cache.
+# Runs on pushes that change ui/. Needs the repository variables AWS_ROLE_ARN and CLOUDFRONT_DISTRIBUTION_ID.
+name: frontend
+
+on:
+  push:
+    branches: [main, aws-serverless]
+    paths: ["ui/**", ".github/workflows/frontend.yml"]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency: frontend-deploy
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+    env:
+      AWS_REGION: ap-south-1
+      SITE_BUCKET: stocks-insights-frontend-552808407801
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - run: npm ci
+
+      - name: Test (headless)
+        run: npx ng test --watch=false
+
+      - name: Build
+        run: npm run build
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload the site
+        run: aws s3 sync dist/stocks-ui/browser s3://$SITE_BUCKET --delete
+
+      - name: Clear the CloudFront cache
+        run: aws cloudfront create-invalidation --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"

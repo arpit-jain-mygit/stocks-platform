@@ -106,7 +106,7 @@ Branch: `aws-serverless`.
 - [ ] **3.2 Database migrations:** run `python db/migrate.py` once from your Mac (or a one-off task). Migrations already applied to Supabase are skipped
 - [x] **3.3 Frontend:** done 2026-10-19: 4 files uploaded to the frontend bucket, invalidation IBCFPFN4FFTNZVZUQHONPFTTBZ on E1AIR4NMCC3PLD. Was: `npm run build`, upload `dist/stocks-ui/browser` to the frontend bucket, create a CloudFront invalidation
 - [~] **3.4 Smoke tests:** passed 2026-10-19: site root and Angular route 200, `/api/companies?ingested=true`, `/api/doc-types`, `/api/companies/OFSS` 200, `/api/ask` answered with sources (one Gemini call), `/api/ingest` and `/api/risky-delete/x` 404. Upload not tested: ingest waits for 2.12. Was: `/health`, `/companies?ingested=true`, one question in the chat, one upload
-- [ ] **3.5 CI/CD:** GitHub Actions with OIDC (no stored AWS keys): backend workflow and frontend workflow, both running the tests first
+- [ ] **3.5 CI/CD:** (OIDC role applied 2026-10-19: arn:aws:iam::552808407801:role/stocks-insights-github-deploy. Workflows committed locally, not yet pushed. Still to do in GitHub: variables AWS_ROLE_ARN and CLOUDFRONT_DISTRIBUTION_ID (E1AIR4NMCC3PLD). Then push to run them. Planned as: `infra/github_oidc.tf` (3 to add: GitHub OIDC provider, deploy role limited to this repo's main and aws-serverless branches) and `.github/workflows/backend.yml` and `frontend.yml`. Set GitHub variables AWS_ROLE_ARN and CLOUDFRONT_DISTRIBUTION_ID. Caveat: CI overwrites the Lambda zip at the key Terraform uses, so the next `terraform apply` re-uploads the local zip. Run the zip build before any apply.) Was: GitHub Actions with OIDC (no stored AWS keys): backend workflow and frontend workflow, both running the tests first
 
 ---
 

@@ -26,7 +26,7 @@ API_REQUIREMENTS="build/lambda-requirements.txt"
 grep -viE '^(pymupdf|python-pptx|python-docx|openpyxl|uvicorn)' requirements.txt > "$API_REQUIREMENTS"
 
 # Step 1: packages for Lambda (arm64, Linux). --only-binary refuses anything that would need compiling.
-../.venv/bin/python -m pip install --quiet --upgrade \
+"${PYTHON:-../.venv/bin/python}" -m pip install --quiet --upgrade \
   "${PLATFORMS[@]}" --implementation cp --python-version "$PYTHON_VERSION" \
   --only-binary=:all: --target "$BUILD_DIR" -r "$API_REQUIREMENTS"
 

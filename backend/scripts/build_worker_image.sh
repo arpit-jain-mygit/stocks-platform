@@ -11,12 +11,14 @@
 # Run from backend/:  bash scripts/build_worker_image.sh
 set -euo pipefail
 
-PROFILE="stocks-insights"
+# AWS_PROFILE_NAME: your local profile. GitHub Actions sets it empty and uses its own credentials.
+PROFILE="${AWS_PROFILE_NAME-stocks-insights}"
 REGION="ap-south-1"
 BUCKET="stocks-insights-artifacts-552808407801"
 PROJECT="stocks-insights-worker-build"
 ZIP="dist/worker-src.zip"
-AWS="aws --profile $PROFILE --region $REGION"
+AWS="aws --region $REGION"
+if [ -n "$PROFILE" ]; then AWS="$AWS --profile $PROFILE"; fi
 
 # Step 1: the source zip. Secrets, data, caches and tests stay out of it.
 mkdir -p dist
