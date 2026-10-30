@@ -20,6 +20,7 @@ All commands run from **`backend/`** with the virtual environment active (`.env`
   - [1.5 Companies, periods and document types](#15-companies-periods-and-document-types)
 - [2. Run the whole ingestion pipeline (one command)](#2-run-the-whole-ingestion-pipeline-one-command)
   - [2.1 Ingestion commands by document type](#21-ingestion-commands-by-document-type)
+  - [2.2 Ingest on AWS (through the API)](#22-ingest-on-aws-through-the-api)
 - [3. Run the API](#3-run-the-api)
   - [3.1 Start the server](#31-start-the-server)
   - [3.2 Endpoints](#32-endpoints)
@@ -215,6 +216,56 @@ Things to keep in mind:
 - **File types:** PDF, CSV, Excel (`.xlsx`), PowerPoint (`.pptx`), Word (`.docx`), text (`.txt`) and Markdown (`.md`). Each has its own reader class in `backend/ingest/formats/`, picked by a factory (`factory.py`). Pictures in PowerPoint slides with little text go to the vision model; spreadsheets and CSV are read cell by cell with no model calls. Citations for spreadsheets and CSV name the sheet and rows (e.g. `statements.xlsx, sheet 'Income Statements', rows 2-61`) instead of a page number. Legacy `.xls`, `.ppt` and `.doc` need converting first.
 - **Quote the period.** Without quotes, the shell splits `Q1 FY26` into two arguments and the command fails.
 - **A new period needs its company's year-end.** `"Q1 FY26"` means the quarter ended 30 Sep 2025 for MSFT (June year-end) but 30 Jun 2025 for a company that ends its year in March.
+
+### 2.2 Ingest on AWS (through the API)
+
+On AWS, the file goes to S3 first, then the API starts an ECS worker that ingests it. Use the API address from the AWS setup (`docs/AWS.md`, step 2.9). `/ingest` is not routed through CloudFront yet, so call API Gateway directly.
+
+Set the address and load the API key (the key is read from SSM and not printed):
+
+```bash
+export API=https://9l1e52v7ia.execute-api.ap-south-1.amazonaws.com
+```
+
+```bash
+export APP_API_KEY=$(aws ssm get-parameter --name /stocks-insights/APP_API_KEY --with-decryption --profile stocks-insights --region ap-south-1 --query Parameter.Value --output text)
+```
+
+**Step 1: ask for an upload link.** The reply has `upload_url` (a presigned S3 link, valid 15 minutes) and `upload_key` (the file's location in S3).
+
+```bash
+curl -s -X POST "$API/uploads" -H "X-API-Key: $APP_API_KEY" -F "file_name=MSFT-Earnings-Release-FY27-Q1.pptx"
+```
+
+**Step 2: upload the file to `upload_url`.**
+
+```bash
+curl -X PUT --upload-file ~/Downloads/MSFT-Earnings-Release-FY27-Q1.pptx "<upload_url>"
+```
+
+**Step 3: start ingestion with `upload_key`.** The reply has a `job_id`.
+
+```bash
+curl -s -X POST "$API/ingest" -H "X-API-Key: $APP_API_KEY" -F "upload_key=<upload_key>" -F "file_name=MSFT-Earnings-Release-FY27-Q1.pptx" -F "company=MSFT" -F "period=Q1 FY27" -F "doc_type=quarterly_results"
+```
+
+**Step 4: check progress.** Wait for `"status": "complete"`. If it's `"failed"`, the `error` field says why.
+
+```bash
+curl -s "$API/jobs/<job_id>" -H "X-API-Key: $APP_API_KEY"
+```
+
+Other document types use the same steps. Change `doc_type` (for example `annual_report` or `investor_presentation`), and the `period` and `company` values to match. To see the allowed values:
+
+```bash
+curl -s "$API/doc-types" -H "X-API-Key: $APP_API_KEY"
+```
+
+Things to keep in mind:
+- **Same file again is skipped.** A file already stored is not processed again. Add `-F "force=true"` to `/ingest` to re-ingest it.
+- **Each ingestion makes Gemini calls** for pages and text. Ingest only the files you need.
+- **The first run may take a few minutes.** The worker starts within about a minute, then reads and stores the file.
+- **Upload links expire after 15 minutes.** If step 2 fails with an expired link, repeat step 1.
 
 ---
 
