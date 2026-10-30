@@ -255,6 +255,20 @@ curl -s -X POST "$API/ingest" -H "X-API-Key: $APP_API_KEY" -F "upload_key=<uploa
 curl -s "$API/jobs/<job_id>" -H "X-API-Key: $APP_API_KEY"
 ```
 
+**Check that the file reached S3** (lists the uploaded files with their sizes):
+
+```bash
+aws s3 ls s3://stocks-insights-uploads-552808407801/uploads/ --recursive --human-readable --profile stocks-insights --region ap-south-1
+```
+
+**Watch the worker's progress live.** Each `slide N: picture -> vision model` line means one slide is done. Press Ctrl+C to stop watching; the job keeps running.
+
+```bash
+aws logs tail /ecs/stocks-insights-worker --follow --profile stocks-insights --region ap-south-1
+```
+
+Decks made of pictures are slow: each picture slide takes about 30 to 60 seconds, so a 20-slide picture deck can take 10 to 20 minutes.
+
 Other document types use the same steps. Change `doc_type` (for example `annual_report` or `investor_presentation`), and the `period` and `company` values to match. To see the allowed values:
 
 ```bash
