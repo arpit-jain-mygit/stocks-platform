@@ -257,6 +257,30 @@ export class Chat {
     this.editingId.set('');
   }
 
+  /** Deletes a chat after the user confirms. The chat on screen, if it goes, moves to the next one. */
+  protected deleteChat(summary: ChatSummary): void {
+    if (summary.id === this.currentId() && this.waiting()) return;   // an answer is still coming in for it
+    if (!confirm(`Delete "${summary.name}"? This cannot be undone.`)) return;
+    if (summary.updated_at === '') {   // never saved, so there is nothing on the server to delete
+      this.removeLocal(summary.id);
+      return;
+    }
+    this.api.deleteChat(summary.id).subscribe({
+      next: () => this.removeLocal(summary.id),
+      error: () => this.saveFailed.set(true),
+    });
+  }
+
+  /** Takes a chat off the list. If it was on screen, the next saved chat opens, or a new chat if none is left. */
+  private removeLocal(id: string): void {
+    const wasCurrent = id === this.currentId();
+    this.sessions.update((list) => list.filter((s) => s.id !== id));
+    if (!wasCurrent) return;
+    const next = this.sessions().find((s) => s.updated_at !== '');
+    if (next) this.openSaved(next.id);
+    else this.startBlank();
+  }
+
   protected toggleList(): void {
     this.listOpen.update((v) => !v);
   }

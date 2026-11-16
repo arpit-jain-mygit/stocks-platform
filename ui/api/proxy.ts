@@ -18,8 +18,8 @@ declare const process: { env: Record<string, string | undefined> };
 const ALLOWED = new Set(['GET companies', 'GET doc-types', 'GET documents', 'POST ask']);
 // Plus one company's page: GET companies/<code> (starts with a letter or digit; then letters, digits, . _ -).
 const COMPANY_PAGE = /^GET companies\/[A-Za-z0-9][A-Za-z0-9._-]{0,39}$/;
-// Saved chats: the list, and one chat (read or save). The id is a random UUID-style string.
-const CHATS = /^(GET chats|GET chats\/[A-Za-z0-9-]{8,64}|PUT chats\/[A-Za-z0-9-]{8,64})$/;
+// Saved chats: the list, and one chat (read, save or delete). The id is a random UUID-style string.
+const CHATS = /^(GET chats|GET chats\/[A-Za-z0-9-]{8,64}|PUT chats\/[A-Za-z0-9-]{8,64}|DELETE chats\/[A-Za-z0-9-]{8,64})$/;
 
 function isAllowed(method: string, path: string): boolean {
   return ALLOWED.has(`${method} ${path}`) || COMPANY_PAGE.test(`${method} ${path}`) || CHATS.test(`${method} ${path}`);
@@ -61,3 +61,4 @@ export async function forward(request: Request): Promise<Response> {
 export const GET = forward;
 export const POST = forward;
 export const PUT = forward;
+export const DELETE = forward;

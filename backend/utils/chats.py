@@ -66,6 +66,13 @@ class ChatStore:
                  Jsonb(session["messages"]))).fetchone()
         return row[0].isoformat()
 
+    def delete_session(self, owner: str, session_id: str) -> bool:
+        """Removes one session of this owner. Returns False if there was no such session."""
+        with self.connect() as conn:
+            result = conn.execute(
+                "DELETE FROM chat_sessions WHERE owner = %s AND id = %s", (owner, session_id))
+        return result.rowcount > 0
+
 
 # The store is made once, the first time it is needed. Tests put a fake in this slot.
 _store: ChatStore | None = None

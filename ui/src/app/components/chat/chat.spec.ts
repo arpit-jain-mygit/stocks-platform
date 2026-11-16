@@ -47,6 +47,9 @@ describe('Chat', () => {
           const session = saved.get(id);
           if (session) req.flush(session);
           else req.flush({ detail: 'No chat with this id' }, { status: 404, statusText: 'Not Found' });
+        } else if (req.request.method === 'DELETE') {
+          saved.delete(id);
+          req.flush({ id, deleted: true });
         } else {
           saved.set(id, { id, ...req.request.body });
           req.flush({ id, updated_at: '2026-11-16T00:00:00Z' });
@@ -219,5 +222,44 @@ describe('Chat', () => {
     (page.querySelector('.sessions-toggle') as HTMLButtonElement).click();
     await fixture.whenStable();
     expect(page.querySelectorAll('.session-name').length).toBe(2);
+  });
+
+  it('deletes a saved chat only after confirming; deleting the chat on screen opens the next one', async () => {
+    const { fixture, page } = await openChat();
+    await ask(fixture, page, 'What is the EPS?');
+    backend.expectOne('/api/ask').flush(ANSWER);
+    await fixture.whenStable();
+    serveChats();
+    (page.querySelector('.new-chat') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    await ask(fixture, page, 'What were the segments?');
+    backend.expectOne('/api/ask').flush(ANSWER);
+    await fixture.whenStable();
+    serveChats();
+    (page.querySelector('.sessions-toggle') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    (page.querySelector('[aria-label="Delete What is the EPS?"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(confirm).toHaveBeenCalled();
+    expect(saved.size).toBe(2);                                          // cancelled: nothing deleted
+
+    confirm.mockReturnValue(true);
+    (page.querySelector('[aria-label="Delete What is the EPS?"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    serveChats();                                                        // the DELETE request
+    await fixture.whenStable();
+    expect(saved.size).toBe(1);
+    expect(page.querySelectorAll('.session-name').length).toBe(1);
+    expect(page.querySelector('.messages .msg.user')?.textContent).toContain('What were the segments?');   // still on screen
+
+    (page.querySelector('[aria-label="Delete What were the segments?"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    serveChats();
+    await fixture.whenStable();
+    expect(saved.size).toBe(0);
+    expect(page.querySelectorAll('.messages .msg').length).toBe(0);      // no chat left: a new one starts
+    expect(page.querySelector('.session-name')?.textContent?.trim()).toBe('New chat');
   });
 });

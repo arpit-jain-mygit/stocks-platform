@@ -16,7 +16,7 @@ var RULES = [
   { path: /^\/ask$/, methods: ['POST'] },
   { path: /^\/uploads$/, methods: ['POST'] },
   { path: /^\/chats$/, methods: ['GET'] },
-  { path: /^\/chats\/[^\/]+$/, methods: ['GET', 'PUT'] }
+  { path: /^\/chats\/[^\/]+$/, methods: ['GET', 'PUT', 'DELETE'] }
 ];
 
 function notAvailable() {

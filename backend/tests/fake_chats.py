@@ -27,3 +27,6 @@ class FakeChatStore:
                                           "company": session["company"], "messages": session["messages"],
                                           "updated_at": updated_at}
         return updated_at
+
+    def delete_session(self, owner: str, session_id: str) -> bool:
+        return self.rows.pop((owner, session_id), None) is not None

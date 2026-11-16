@@ -84,3 +84,21 @@ def test_too_many_messages_are_refused(client):
 
 def test_a_name_longer_than_60_characters_is_refused(client):
     assert client.put(f"/chats/{SESSION}", json=session_body(name="x" * 61), headers=OWNER).status_code == 422
+
+
+def test_delete_removes_the_session_for_its_owner_only(client):
+    client.put(f"/chats/{SESSION}", json=session_body(), headers=OWNER)
+
+    assert client.delete(f"/chats/{SESSION}", headers=OTHER).status_code == 404   # another browser cannot delete it
+    assert client.get(f"/chats/{SESSION}", headers=OWNER).status_code == 200
+
+    assert client.delete(f"/chats/{SESSION}", headers=OWNER).json() == {"id": SESSION, "deleted": True}
+    assert client.get(f"/chats/{SESSION}", headers=OWNER).status_code == 404
+    assert client.get("/chats", headers=OWNER).json() == []
+
+
+def test_deleting_twice_is_404(client):
+    client.put(f"/chats/{SESSION}", json=session_body(), headers=OWNER)
+    client.delete(f"/chats/{SESSION}", headers=OWNER)
+
+    assert client.delete(f"/chats/{SESSION}", headers=OWNER).status_code == 404

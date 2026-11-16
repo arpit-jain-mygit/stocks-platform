@@ -46,6 +46,9 @@
                         [attr.aria-current]="s.id === currentId() ? 'true' : null">{{ s.name }}</button>
                 <button type="button" class="icon rename-session" (click)="startRename(s)" title="Rename chat"
                         [attr.aria-label]="'Rename ' + s.name">&#x270E;</button>
+                <button type="button" class="icon delete-session" (click)="deleteChat(s)" title="Delete chat"
+                        [disabled]="s.id === currentId() && waiting()"
+                        [attr.aria-label]="'Delete ' + s.name">&#x1F5D1;</button>
               }
             </li>
           }

@@ -138,6 +138,12 @@ export class StocksApi {
       { name: session.name, renamed: session.renamed, company: session.company, messages: session.messages },
       { headers: ownerHeaders() });
   }
+
+  /** Deletes one saved chat and its messages. */
+  deleteChat(id: string): Observable<{ id: string; deleted: boolean }> {
+    return this.http.delete<{ id: string; deleted: boolean }>(
+      `${this.base}/chats/${encodeURIComponent(id)}`, { headers: ownerHeaders() });
+  }
 }
 
 // --- Saved chats ---------------------------------------------------------------------------

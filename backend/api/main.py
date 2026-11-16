@@ -319,6 +319,14 @@ def save_chat(session_id: str, body: ChatSessionIn, owner: str = Depends(chat_ow
     return {"id": session_id, "updated_at": updated_at}
 
 
+@app.delete("/chats/{session_id}", dependencies=[Depends(require_api_key)])
+def delete_chat(session_id: str, owner: str = Depends(chat_owner)) -> dict:
+    """Deletes one saved session of this owner. 404 if there is no such session."""
+    if not get_chat_store().delete_session(owner, chat_id(session_id)):
+        raise HTTPException(status_code=404, detail="No chat with this id")
+    return {"id": session_id, "deleted": True}
+
+
 @app.post("/ask", response_model=AskResponse, dependencies=[Depends(require_api_key)])
 def ask(request: AskRequest) -> dict:
     """Answers a question from the ingested filings, citing file and page for every fact."""
