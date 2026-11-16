@@ -128,6 +128,87 @@ Branch: `aws-serverless`.
 
 ---
 
+## Operations – Gemini key and resuming a failed ingest
+
+The worker reads `GEMINI_API_KEY` from SSM Parameter Store (`/stocks-insights/GEMINI_API_KEY`) each time a task starts. Changing the parameter needs no Terraform apply and no image rebuild. The next ingest uses the new key.
+
+### Update the key
+
+Paste the key at the prompt, so it never appears in shell history:
+
+```bash
+read -s "GEMINI_KEY?Paste new Gemini key: "
+```
+```bash
+echo ${#GEMINI_KEY}
+```
+```bash
+aws ssm put-parameter --name /stocks-insights/GEMINI_API_KEY --type SecureString --value "$GEMINI_KEY" --overwrite --profile stocks-insights --region ap-south-1
+```
+```bash
+unset GEMINI_KEY
+```
+
+The `echo` prints the key's length only. If it prints `0`, the paste did not register; run the `read` line again in the same terminal.
+
+A key from the same Google Cloud project shares that project's Gemini quota. A 429 `RESOURCE_EXHAUSTED` error means the quota is used up, not that the key is wrong. Use a key from another project, or enable billing on the project.
+
+### Resume a failed ingest
+
+Each successful slide (or scanned page) is cached in the S3 cache bucket as soon as it is read. A re-run reads the cached results and calls Gemini only for the parts that failed, so it does not pay for the whole file again.
+
+Re-submit the same upload. Use the `upload_key` from the first run; the file is still in the uploads bucket for 30 days.
+
+```bash
+API=https://9l1e52v7ia.execute-api.ap-south-1.amazonaws.com
+```
+```bash
+curl -s -X POST "$API/ingest" -H "X-API-Key: $APP_API_KEY" -F "upload_key=uploads/14d47d47402f45e88186a1be5815805e/MSFT-Earnings-Release-FY27-Q1.pptx" -F "file_name=MSFT-Earnings-Release-FY27-Q1.pptx" -F "company=MSFT" -F "period=Q1 FY27 (quarter ended 30-Sep-2026)" -F "doc_type=quarterly_results"
+```
+
+The response contains a new `job_id`. Check it with:
+
+```bash
+curl -s "$API/jobs/<job_id>" -H "X-API-Key: $APP_API_KEY"
+```
+
+If the API refuses the re-submit because the document already exists, add `-F "force=true"` to the command.
+
+### Example job record (DynamoDB)
+
+Each ingest job is stored in the `stocks-insights-jobs` table. The record is created when the job is queued, and the worker updates its `status` as the job runs. The API returns the same record from `GET /jobs/<job_id>`.
+
+Example for the MSFT press release (`MSFT-PressReleaseFY27q1.docx`):
+
+```json
+{"job_id": "52646861dff84065b414db80234b6aae", "status": "complete", "doc_id": "d4095fad1d7cb26a83e91cef1c16040b4011466e629d2dbe73458ee964f5e767", "file_name": "MSFT-PressReleaseFY27q1.docx", "company_id": "MSFT", "period": "Q1 FY27 (quarter ended 30-Sep-2026)", "doc_type": "quarterly_results", "created_at": "2026-10-31T00:22:53.517963+00:00", "result": {"doc_id": "d4095fad1d7cb26a83e91cef1c16040b4011466e629d2dbe73458ee964f5e767", "file_name": "MSFT-PressReleaseFY27q1.docx", "company_id": "MSFT", "company": "Microsoft Corporation", "fiscal_year": 2027, "quarter": 1, "period_end": "2026-09-30", "period": "Q1 FY27 (quarter ended 30-Sep-2026)", "doc_type": "quarterly_results", "status": "complete", "pages": 7, "ocr_pages": [], "chunks": 42}, "finished_at": "2026-10-31T00:23:30.402844+00:00"}
+```
+
+Fields to check:
+
+- `status`: `queued`, `running`, `complete`, or `failed`. A failed job has an `error` field instead of `result`.
+- `chunks`: how many pieces of text were stored for search. The press release has 42.
+- `ocr_pages`: pages that needed OCR. Empty means every page had a text layer or went to the vision model.
+- `doc_id`: the same for the same file and period. A re-run keeps it.
+
+**All timestamps in these records are UTC.** `created_at` 00:22:53 UTC is 05:52:53 IST (India). Use UTC when comparing with the CloudWatch logs and the S3 listing, which also show UTC.
+
+### Site URL
+
+The UI is served at **https://d1zkomffgjvef3.cloudfront.net**.
+
+This is the default `*.cloudfront.net` name that AWS gives the CloudFront distribution. It stays the same as long as the distribution exists. It changes only if the distribution is deleted and created again, for example by `terraform destroy` followed by `terraform apply`.
+
+To get the current URL:
+
+```bash
+cd infra && terraform output -raw site_url
+```
+
+To use your own domain later, request an ACM certificate in `us-east-1`, add the domain as an alias on the distribution, and add the new origin to `upload_allowed_origins` in `infra/variables.tf` so uploads from that origin are allowed.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
@@ -147,6 +228,8 @@ Branch: `aws-serverless`.
 | Duplicate jobs after a retry | The job store is not used by the worker | Check `JOB_BACKEND=dynamodb` and the job id passed to the worker |
 | Answers differ from Railway | Different `GEMINI_API_KEY` or environment variables | Compare SSM parameters with Railway's variables |
 | Surprise bill | Forgotten NAT gateway, or a Fargate task left running | Budget alarm (2.3); check Cost Explorer by service |
+| Job `failed` with `429 RESOURCE_EXHAUSTED` | Gemini quota used up for the key's project | Wait for the quota reset, or use a key from another project or a billed project. Then re-submit (see "Resume a failed ingest") |
+| `aws ssm put-parameter` fails with `Member must have length greater than or equal to 1` | The shell variable holding the key is empty | Run the `read -s` line in the same terminal, check `echo ${#GEMINI_KEY}`, then run `put-parameter` |
 
 ---
 

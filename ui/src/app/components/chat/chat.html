@@ -5,23 +5,53 @@
 }
 
 @if (open()) {
-  <section class="window" role="dialog" aria-label="Ask about the filings">
-    <!-- Title bar: company picker, clear, close. -->
+  <section class="window" role="dialog" aria-label="Ask about the filings"
+           [style.width.px]="width()" [style.height.px]="height()">
+    <!-- Drag this corner to resize the window (hidden on phones, where the window fills the screen). -->
+    <div class="grip" (pointerdown)="startResize($event)" title="Drag to resize" aria-hidden="true"></div>
+
+    <!-- Title bar: sessions, new chat, company picker, close. -->
     <header class="bar">
+      <button type="button" class="icon sessions-toggle" (click)="toggleList()" [attr.aria-expanded]="listOpen()"
+              title="Saved chats" aria-label="Saved chats">&#x2630;</button>
       <label class="picker">
         <span class="visually-hidden">Company</span>
-        <select [(ngModel)]="company" name="company">
+        <select [ngModel]="company()" (ngModelChange)="onCompanyChange($event)" name="company">
           <option value="" disabled>Choose a company</option>
           @for (c of companies(); track c.company_id) {
             <option [value]="c.company_id">{{ c.name }}</option>
           }
         </select>
       </label>
-      @if (messages().length) {
-        <button type="button" class="icon" (click)="clear()" title="Clear conversation" aria-label="Clear conversation">&#x21BA;</button>
-      }
+      <button type="button" class="icon new-chat" (click)="newChat()" [disabled]="waiting() || !messages().length"
+              title="New chat" aria-label="New chat">+</button>
       <button type="button" class="icon" (click)="close()" title="Close" aria-label="Close chat">&times;</button>
     </header>
+
+    <!-- The saved chats. Click a name to open it; the pencil renames it. -->
+    @if (listOpen()) {
+      <section class="session-list" aria-label="Saved chats">
+        @if (saveFailed()) {
+          <p class="save-error" role="alert">Could not load or save chats. The chat on screen is still here.</p>
+        }
+        <ul>
+          @for (s of sessions(); track s.id) {
+            <li [class.current]="s.id === currentId()">
+              @if (editingId() === s.id) {
+                <input #rename class="rename" type="text" maxlength="60" [value]="s.name" aria-label="Chat name"
+                       (keydown.enter)="finishRename(s, rename.value)" (keydown.escape)="cancelRename()"
+                       (blur)="finishRename(s, rename.value)">
+              } @else {
+                <button type="button" class="session-name" (click)="switchTo(s)" [disabled]="waiting()"
+                        [attr.aria-current]="s.id === currentId() ? 'true' : null">{{ s.name }}</button>
+                <button type="button" class="icon rename-session" (click)="startRename(s)" title="Rename chat"
+                        [attr.aria-label]="'Rename ' + s.name">&#x270E;</button>
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    }
 
     <!-- The conversation. aria-live: screen readers read new answers out loud. -->
     <div class="messages" #list aria-live="polite">

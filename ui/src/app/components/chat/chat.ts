@@ -4,13 +4,16 @@
 // Each question goes to POST /api/ask (services/stocks-api.ts). The company picker
 // starts on the company selected on the home view. A company must be chosen before
 // a question can be sent (one company per question: its figures and citations belong together).
-// The conversation lives only in memory: it is gone after a page reload.
+//
+// Conversations are sessions, saved in the database through /api/chats. A session is named after
+// the first words of its first question (or renamed by the user). The browser only remembers
+// the window size, and its owner id (see chatOwnerId in services/stocks-api.ts).
 
 import { Component, ElementRef, Injector, afterNextRender, effect, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { DISCLAIMER } from '../../disclaimer';
-import { Company, Source, StocksApi } from '../../services/stocks-api';
+import { ChatMessage, ChatSession, ChatSummary, Company, StocksApi } from '../../services/stocks-api';
 
 /**
  * Suggested questions, always shown above the question box - what most stock researchers
@@ -28,13 +31,13 @@ export const SUGGESTED_QUESTIONS: { label: string; question: string }[] = [
   { label: 'Risks & legal', question: 'What key risks, auditor qualifications or legal cases are mentioned?' },
 ];
 
-/** One bubble in the conversation. */
-export interface ChatMessage {
-  role: 'user' | 'assistant' | 'error';
-  text: string;
-  company: string;          // company code asked about ("" = all companies)
-  sources?: Source[];       // assistant answers only
-}
+// The window size is the only thing kept in this browser's own storage.
+const SIZE_KEY = 'stocks-insights.chat.size';
+const DEFAULT_WIDTH = 400;               // px, as before
+const DEFAULT_HEIGHT = 600;              // px, as before
+const MIN_WIDTH = 320;
+const MIN_HEIGHT = 360;
+const WINDOW_MARGIN = 48;                // px kept clear around the window (24px each side)
 
 @Component({
   selector: 'app-chat',
@@ -62,6 +65,17 @@ export class Chat {
   /** The picker's value: follows the home view's selection until the user changes it. */
   protected readonly company = linkedSignal(() => this.companyId() ?? '');
 
+  // Sessions: the saved list, the one on screen, the rename box, and a save warning.
+  protected readonly sessions = signal<ChatSummary[]>([]);
+  protected readonly currentId = signal('');
+  protected readonly listOpen = signal(false);
+  protected readonly editingId = signal('');
+  protected readonly saveFailed = signal(false);
+
+  // Window size in px, changed by dragging the corner.
+  protected readonly width = signal(DEFAULT_WIDTH);
+  protected readonly height = signal(DEFAULT_HEIGHT);
+
   // Elements the code needs to touch: the message list (scrolling) and the text box (focus).
   private readonly list = viewChild<ElementRef<HTMLElement>>('list');
   private readonly box = viewChild<ElementRef<HTMLTextAreaElement>>('box');
@@ -73,6 +87,23 @@ export class Chat {
       this.waiting();
       const el = this.list()?.nativeElement;
       if (el) queueMicrotask(() => (el.scrollTop = el.scrollHeight));
+    });
+
+    const size = readSize();
+    this.width.set(size.width);
+    this.height.set(size.height);
+
+    // Load the saved chats. The most recent one comes back on screen; with none, a new chat starts.
+    this.api.chats().subscribe({
+      next: (list) => {
+        if (list.length) {
+          this.sessions.set(list);
+          this.openSaved(list[0].id);
+        } else {
+          this.startBlank();
+        }
+      },
+      error: () => this.startBlank(),   // backend unreachable: a new chat still works, it just is not kept
     });
   }
 
@@ -107,6 +138,7 @@ export class Chat {
     if (text.length < 3 || this.waiting() || !company) return;
 
     this.messages.update((m) => [...m, { role: 'user', text, company }]);
+    this.persist();
     this.question.set('');
     this.waiting.set(true);
 
@@ -114,17 +146,157 @@ export class Chat {
       next: (reply) => {
         this.messages.update((m) => [...m, { role: 'assistant', text: reply.answer, company, sources: reply.sources }]);
         this.waiting.set(false);
+        this.persist();
       },
       error: (err: HttpErrorResponse) => {
         this.messages.update((m) => [...m, { role: 'error', text: errorText(err), company }]);
         this.waiting.set(false);
+        this.persist();
       },
     });
   }
 
-  protected clear(): void {
-    this.messages.set([]);
+  // --- Sessions ----------------------------------------------------------------
+
+  /** Starts a new chat. Nothing is saved until its first question. */
+  protected newChat(): void {
+    if (this.waiting() || this.messages().length === 0) return;
+    this.startBlank();
   }
+
+  /** Opens a saved chat. Not while an answer is still coming in for the current one. */
+  protected switchTo(summary: ChatSummary): void {
+    if (this.waiting() || summary.id === this.currentId()) return;
+    // A new chat that was never asked anything is dropped when the user leaves it.
+    this.sessions.update((list) => list.filter((s) => !(s.id === this.currentId() && s.updated_at === '')));
+    this.openSaved(summary.id);
+  }
+
+  /** The picker changed: keep the company with this chat. */
+  protected onCompanyChange(code: string): void {
+    this.company.set(code);
+    this.sessions.update((list) => list.map((s) => (s.id === this.currentId() ? { ...s, company: code } : s)));
+    // A new chat that was never asked anything stays unsaved, so the server gets no empty chats.
+    const saved = this.sessions().find((s) => s.id === this.currentId())?.updated_at !== '';
+    if (this.messages().length || saved) this.persist();
+  }
+
+  /** A chat made here, not yet saved: it has no id on the server until its first question. */
+  private startBlank(): void {
+    const blank: ChatSummary = {
+      id: crypto.randomUUID(), name: 'New chat', renamed: false, company: this.company(), updated_at: '',
+    };
+    this.sessions.update((list) => [blank, ...list]);
+    this.activate({ id: blank.id, name: blank.name, renamed: false, company: blank.company, messages: [] });
+  }
+
+  /** Loads a saved chat with its messages and puts it on screen. */
+  private openSaved(id: string): void {
+    this.currentId.set(id);
+    this.api.chat(id).subscribe({
+      next: (session) => this.activate(session),
+      error: () => this.saveFailed.set(true),
+    });
+  }
+
+  /** Puts a chat's messages and company on screen. */
+  private activate(session: ChatSession): void {
+    this.currentId.set(session.id);
+    this.messages.set(session.messages);
+    this.company.set(session.company || this.companyId() || '');
+    this.editingId.set('');
+  }
+
+  /** Saves the chat on screen: its name, company and whole conversation. */
+  private persist(): void {
+    const id = this.currentId();
+    const summary = this.sessions().find((s) => s.id === id);
+    if (!summary) return;
+    const messages = this.messages();
+    const firstQuestion = messages.find((m) => m.role === 'user')?.text;
+    const name = summary.renamed || !firstQuestion ? summary.name : sessionName(firstQuestion);
+    this.sessions.update((list) => list.map((s) => (s.id === id ? { ...s, name } : s)));
+    this.save({ id, name, renamed: summary.renamed, company: this.company(), messages });
+  }
+
+  /** Sends one chat to the server. The list keeps its time of last save, for the next load. */
+  private save(session: ChatSession): void {
+    this.api.saveChat(session).subscribe({
+      next: (saved) => {
+        this.saveFailed.set(false);
+        this.sessions.update((list) => list.map((s) => (s.id === saved.id ? { ...s, updated_at: saved.updated_at } : s)));
+      },
+      error: () => this.saveFailed.set(true),
+    });
+  }
+
+  /** Double-click or the pencil: the name becomes an editable box, with its text selected. */
+  protected startRename(summary: ChatSummary): void {
+    this.editingId.set(summary.id);
+    afterNextRender(() => document.querySelector<HTMLInputElement>('.rename')?.select(), { injector: this.injector });
+  }
+
+  /** Enter or leaving the box saves the new name. An empty name keeps the old one. */
+  protected finishRename(summary: ChatSummary, value: string): void {
+    if (this.editingId() !== summary.id) return;   // already saved or cancelled (blur runs after Enter and Esc)
+    this.editingId.set('');
+    const name = value.trim().slice(0, 60);
+    if (!name) return;
+    this.sessions.update((list) => list.map((s) => (s.id === summary.id ? { ...s, name, renamed: true } : s)));
+
+    if (summary.id === this.currentId()) {
+      this.persist();
+      return;
+    }
+    // Another chat: fetch its messages first, so saving the new name does not wipe them.
+    this.api.chat(summary.id).subscribe((session) => this.save({ ...session, name, renamed: true }));
+  }
+
+  /** Esc: leave the name as it was. */
+  protected cancelRename(): void {
+    this.editingId.set('');
+  }
+
+  protected toggleList(): void {
+    this.listOpen.update((v) => !v);
+  }
+
+  // --- Resize ------------------------------------------------------------------
+
+  /** Drag the top-left corner: the window grows up and left, since it stays anchored bottom-right. */
+  protected startResize(event: PointerEvent): void {
+    event.preventDefault();
+    const grip = event.currentTarget as HTMLElement;
+    grip.setPointerCapture(event.pointerId);
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startWidth = this.width();
+    const startHeight = this.height();
+
+    const move = (e: PointerEvent) => {
+      this.width.set(clamp(startWidth + (startX - e.clientX), MIN_WIDTH, window.innerWidth - WINDOW_MARGIN));
+      this.height.set(clamp(startHeight + (startY - e.clientY), MIN_HEIGHT, window.innerHeight - WINDOW_MARGIN));
+    };
+    const stop = () => {
+      grip.removeEventListener('pointermove', move);
+      grip.removeEventListener('pointerup', stop);
+      grip.removeEventListener('pointercancel', stop);
+      this.saveSize();
+    };
+    grip.addEventListener('pointermove', move);
+    grip.addEventListener('pointerup', stop);
+    grip.addEventListener('pointercancel', stop);
+  }
+
+  private saveSize(): void {
+    try {
+      localStorage.setItem(SIZE_KEY, JSON.stringify({ width: this.width(), height: this.height() }));
+    } catch {
+      // Storage blocked: the size just is not remembered.
+    }
+  }
+
+  // --- Display -----------------------------------------------------------------
 
   /** "OFSS" -> "Oracle Financial Services Software Ltd"; "" -> "Choose a company". */
   protected companyName(code: string): string {
@@ -138,6 +310,34 @@ export class Chat {
       .replace(/\[(S\d+(?:\s*,\s*S\d+)*)\]/g, '<span class="cite">[$1]</span>')
       .replace(/\n/g, '<br>');
   }
+}
+
+/**
+ * The name for a chat: the first six words of its first question, cut to 40 characters.
+ * "What were the revenue and net profit for the latest period?" -> "What were the revenue and net…"
+ */
+export function sessionName(question: string): string {
+  const words = question.trim().split(/\s+/);
+  let name = words.slice(0, 6).join(' ');
+  if (name.length > 40) name = name.slice(0, 40).trimEnd();
+  return name !== question.trim() ? name + '…' : name;
+}
+
+/** Reads the saved window size, or the defaults. */
+function readSize(): { width: number; height: number } {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SIZE_KEY) ?? 'null');
+    if (parsed && typeof parsed.width === 'number' && typeof parsed.height === 'number') {
+      return { width: parsed.width, height: parsed.height };
+    }
+  } catch {
+    // Not readable: use the defaults.
+  }
+  return { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT };
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
 }
 
 /** Makes text safe to put into HTML (no tags from the model can run). */

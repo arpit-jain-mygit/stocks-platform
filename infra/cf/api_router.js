@@ -14,7 +14,9 @@ var RULES = [
   { path: /^\/documents(\/[^\/]+)?$/, methods: ['GET'] },
   { path: /^\/jobs\/[^\/]+$/, methods: ['GET'] },
   { path: /^\/ask$/, methods: ['POST'] },
-  { path: /^\/uploads$/, methods: ['POST'] }
+  { path: /^\/uploads$/, methods: ['POST'] },
+  { path: /^\/chats$/, methods: ['GET'] },
+  { path: /^\/chats\/[^\/]+$/, methods: ['GET', 'PUT'] }
 ];
 
 function notAvailable() {

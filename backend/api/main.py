@@ -39,10 +39,12 @@ background. Poll /jobs/{job_id} to see when it is done.
 # build_filters:  validates company + period for questions (query/search.py).
 # companies:      the company registry (utils/companies.py).
 import os
+import re
 import uuid
 from datetime import datetime, timezone
+from typing import Literal
 
-from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
 from api.security import require_api_key
@@ -52,6 +54,7 @@ from ingest.formats import check_format, get_reader
 from ingest.pipeline import check_existing, describe
 from query.answer import answer
 from query.search import build_filters
+from utils.chats import get_chat_store
 from utils.companies import company_dict, find_company, load_companies
 from utils.jobs import job_store
 from ingest.worker import run_job
@@ -109,6 +112,36 @@ class AskResponse(BaseModel):
     answer: str
     sources: list[Source]
     unverified_figures: list[str] = []   # figures in the answer not found in the sources (empty = all found)
+
+
+# --- Saved chat sessions (the Ask window) ------------------------------------------------------
+MAX_CHAT_MESSAGES = 200                  # a session holds at most this many messages
+
+class ChatMessageIn(BaseModel):
+    role: Literal["user", "assistant", "error"]
+    text: str = Field(..., max_length=8000)
+    company: str = Field("", max_length=20)
+    sources: list[dict] | None = Field(None, max_length=50)
+
+class ChatSessionIn(BaseModel):
+    name: str = Field(..., max_length=60)
+    renamed: bool = False
+    company: str = Field("", max_length=20)
+    messages: list[ChatMessageIn] = Field(..., max_length=MAX_CHAT_MESSAGES)
+
+
+def chat_owner(x_chat_owner: str = Header(default="")) -> str:
+    """The browser's owner id (X-Chat-Owner header): random, 8 to 64 letters, digits or dashes."""
+    if not re.fullmatch(r"[A-Za-z0-9-]{8,64}", x_chat_owner):
+        raise HTTPException(status_code=400, detail="X-Chat-Owner header is required")
+    return x_chat_owner
+
+
+def chat_id(session_id: str) -> str:
+    """A session id from the URL, with the same rules as the owner id."""
+    if not re.fullmatch(r"[A-Za-z0-9-]{8,64}", session_id):
+        raise HTTPException(status_code=400, detail="Invalid chat id")
+    return session_id
 
 
 # --- Background work ---------------------------------------------------------------------
@@ -262,6 +295,28 @@ def document(doc_id: str) -> dict:
     if record is None:
         raise HTTPException(status_code=404, detail="No document with this doc_id")
     return record
+
+
+@app.get("/chats", dependencies=[Depends(require_api_key)])
+def list_chats(owner: str = Depends(chat_owner)) -> list[dict]:
+    """This browser's saved chat sessions, newest first (no messages: GET /chats/{id} has them)."""
+    return get_chat_store().list_sessions(owner)
+
+
+@app.get("/chats/{session_id}", dependencies=[Depends(require_api_key)])
+def get_chat(session_id: str, owner: str = Depends(chat_owner)) -> dict:
+    """One saved session with its messages."""
+    found = get_chat_store().get_session(owner, chat_id(session_id))
+    if found is None:
+        raise HTTPException(status_code=404, detail="No chat with this id")
+    return found
+
+
+@app.put("/chats/{session_id}", dependencies=[Depends(require_api_key)])
+def save_chat(session_id: str, body: ChatSessionIn, owner: str = Depends(chat_owner)) -> dict:
+    """Creates or replaces one saved session. Returns its id and new updated_at time."""
+    updated_at = get_chat_store().save_session(owner, chat_id(session_id), body.model_dump())
+    return {"id": session_id, "updated_at": updated_at}
 
 
 @app.post("/ask", response_model=AskResponse, dependencies=[Depends(require_api_key)])

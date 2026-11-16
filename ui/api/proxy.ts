@@ -18,9 +18,11 @@ declare const process: { env: Record<string, string | undefined> };
 const ALLOWED = new Set(['GET companies', 'GET doc-types', 'GET documents', 'POST ask']);
 // Plus one company's page: GET companies/<code> (starts with a letter or digit; then letters, digits, . _ -).
 const COMPANY_PAGE = /^GET companies\/[A-Za-z0-9][A-Za-z0-9._-]{0,39}$/;
+// Saved chats: the list, and one chat (read or save). The id is a random UUID-style string.
+const CHATS = /^(GET chats|GET chats\/[A-Za-z0-9-]{8,64}|PUT chats\/[A-Za-z0-9-]{8,64})$/;
 
 function isAllowed(method: string, path: string): boolean {
-  return ALLOWED.has(`${method} ${path}`) || COMPANY_PAGE.test(`${method} ${path}`);
+  return ALLOWED.has(`${method} ${path}`) || COMPANY_PAGE.test(`${method} ${path}`) || CHATS.test(`${method} ${path}`);
 }
 
 // --- Forward one request -----------------------------------------------------------------
@@ -42,10 +44,11 @@ export async function forward(request: Request): Promise<Response> {
   const query = url.searchParams.toString();
   const target = `${backend.replace(/\/+$/, '')}/${path}${query ? `?${query}` : ''}`;
 
+  const owner = request.headers.get('X-Chat-Owner');   // the browser's id for its saved chats (not a secret)
   const reply = await fetch(target, {
     method: request.method,
-    headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
-    body: request.method === 'POST' ? await request.text() : undefined,
+    headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json', ...(owner ? { 'X-Chat-Owner': owner } : {}) },
+    body: request.method === 'POST' || request.method === 'PUT' ? await request.text() : undefined,
   });
   // Pass the backend's answer through as it is (status + JSON body).
   return new Response(reply.body, {
@@ -57,3 +60,4 @@ export async function forward(request: Request): Promise<Response> {
 // Vercel calls the function named after the HTTP method.
 export const GET = forward;
 export const POST = forward;
+export const PUT = forward;

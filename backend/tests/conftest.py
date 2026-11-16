@@ -51,7 +51,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 import api.main
+from tests.fake_chats import FakeChatStore
 from tests.fakes import FakeLLM, FakeMetadataStore, FakeVectorStore
+from utils import chats as chats_module
 from utils.llm import factory as llm_factory
 from utils.metadata import factory as metadata_factory
 from utils.vectorstore import factory as vector_factory
@@ -79,10 +81,11 @@ def fakes():
     llm_factory._clients.update(models)
     vector_factory._store = FakeVectorStore(dim=768)
     metadata_factory._store = FakeMetadataStore()
+    chats_module._store = FakeChatStore()
     api.main.jobs.clear()
     yield {"llm": models, "vectors": vector_factory._store, "meta": metadata_factory._store}
     llm_factory._clients.clear()
-    vector_factory._store = metadata_factory._store = None
+    vector_factory._store = metadata_factory._store = chats_module._store = None
 
 
 @pytest.fixture

@@ -25,8 +25,10 @@
   z-index: 10;
   display: flex;
   flex-direction: column;
-  width: 400px;
+  width: 400px;                              /* the component sets the size from the user's drag */
   height: min(600px, calc(100vh - 48px));
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 48px);
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--bg);
@@ -34,13 +36,105 @@
   overflow: hidden;
 }
 
-/* Phones: the window fills the screen. */
+/* Resize handle: the top-left corner. Dragging up and left makes the window bigger. */
+.grip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 18px;
+  height: 18px;
+  border-radius: 12px 0 0 0;
+  cursor: nwse-resize;
+  touch-action: none;
+  background: linear-gradient(135deg, var(--border) 0 40%, transparent 40%);
+}
+
+/* The list of saved chats, under the title bar. */
+.session-list {
+  max-height: 40%;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  padding: 6px;
+}
+
+.session-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.session-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+
+.session-list li.current {
+  background: var(--bg);
+}
+
+.session-name {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 4px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.session-name:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.rename {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.session-list .icon {
+  width: 28px;
+  height: 28px;
+  font-size: 0.9rem;
+}
+
+.save-error {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  color: #b42318;
+}
+
+/* Phones: the window fills the screen, with no resize handle. */
 @media (max-width: 600px) {
   .window {
     inset: 0;
-    width: auto;
-    height: auto;
+    width: auto !important;              /* beats the size the component sets inline */
+    height: auto !important;
+    max-width: none;
+    max-height: none;
     border-radius: 0;
+  }
+
+  .grip {
+    display: none;
   }
 
   .launcher {

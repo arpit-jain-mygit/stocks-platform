@@ -120,4 +120,72 @@ export class StocksApi {
   docTypes(): Observable<DocTypes> {
     return this.http.get<DocTypes>(`${this.base}/doc-types`);
   }
+
+  /** This browser's saved chats, newest first (no messages). */
+  chats(): Observable<ChatSummary[]> {
+    return this.http.get<ChatSummary[]>(`${this.base}/chats`, { headers: ownerHeaders() });
+  }
+
+  /** One saved chat with its messages. */
+  chat(id: string): Observable<ChatSession> {
+    return this.http.get<ChatSession>(`${this.base}/chats/${encodeURIComponent(id)}`, { headers: ownerHeaders() });
+  }
+
+  /** Creates or replaces a saved chat with its name, company and messages. */
+  saveChat(session: ChatSession): Observable<{ id: string; updated_at: string }> {
+    return this.http.put<{ id: string; updated_at: string }>(
+      `${this.base}/chats/${encodeURIComponent(session.id)}`,
+      { name: session.name, renamed: session.renamed, company: session.company, messages: session.messages },
+      { headers: ownerHeaders() });
+  }
+}
+
+// --- Saved chats ---------------------------------------------------------------------------
+
+/** One saved chat in the list (GET /chats). */
+export interface ChatSummary {
+  id: string;
+  name: string;
+  renamed: boolean;
+  company: string;
+  updated_at: string;
+}
+
+/** One saved chat with its conversation (GET /chats/{id}, PUT /chats/{id}). */
+export interface ChatSession {
+  id: string;
+  name: string;
+  renamed: boolean;
+  company: string;
+  messages: ChatMessage[];
+}
+
+/** One bubble in a saved chat. */
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'error';
+  text: string;
+  company: string;
+  sources?: Source[];
+}
+
+const OWNER_KEY = 'stocks-insights.chat.owner';
+
+/**
+ * The browser's owner id for saved chats: a random UUID made once and kept in localStorage.
+ * It is not a login: it only keeps this browser's chats apart from other browsers'.
+ */
+export function chatOwnerId(): string {
+  try {
+    const stored = localStorage.getItem(OWNER_KEY);
+    if (stored && /^[A-Za-z0-9-]{8,64}$/.test(stored)) return stored;
+    const created = crypto.randomUUID();
+    localStorage.setItem(OWNER_KEY, created);
+    return created;
+  } catch {
+    return crypto.randomUUID();   // storage blocked: this visit gets a new owner (its chats are not kept)
+  }
+}
+
+function ownerHeaders(): { [header: string]: string } {
+  return { 'X-Chat-Owner': chatOwnerId() };
 }

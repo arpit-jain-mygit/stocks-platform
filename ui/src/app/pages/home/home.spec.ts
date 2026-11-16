@@ -23,7 +23,11 @@ describe('Home', () => {
     backend = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => backend.verify());   // fails if the page made a call the test didn't expect
+  afterEach(() => {
+    // The chat window on this page loads the saved chats on start: answer that (it is not what these tests check).
+    backend.match((r) => r.url === '/api/chats').forEach((r) => r.flush([]));
+    backend.verify();                  // fails if the page made a call the test didn't expect
+  });
 
   // Builds the page and returns its HTML plus the (still unanswered) companies request.
   async function open() {

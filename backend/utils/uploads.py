@@ -60,7 +60,15 @@ def read_upload(key: str, client=None) -> bytes:
     if not key.startswith("uploads/") or ".." in key:
         raise ValueError("upload_key must come from POST /uploads")
     s3 = _s3_client(client)
-    size = s3.head_object(Bucket=bucket, Key=key)["ContentLength"]
+    try:
+        size = s3.head_object(Bucket=bucket, Key=key)["ContentLength"]
+    except Exception as error:
+        # S3 answers 404 for a missing file, or 403 when the role cannot list the bucket.
+        # Both mean "no file at this key", so the caller gets a clear 400 instead of a 500.
+        code = getattr(error, "response", {}).get("Error", {}).get("Code", "")
+        if code in ("404", "403", "NoSuchKey", "NotFound"):
+            raise ValueError("No file found for upload_key. Upload the file with POST /uploads first, then send that upload_key.")
+        raise
     if size > MAX_UPLOAD_BYTES:
         raise ValueError(f"Upload is larger than {MAX_UPLOAD_BYTES // (1024 * 1024)} MB")
     return s3.get_object(Bucket=bucket, Key=key)["Body"].read()
